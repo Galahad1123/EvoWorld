@@ -1,0 +1,16 @@
+# Canonical contracts v1, Phase7 fixed benchmark profile
+
+Three JSON files are authoritative loader inputs. `specs.validate_specs` is the executable schema plus profile validator. This implementation supports the accepted six-asset reconstruction benchmark; it is not an arbitrary-scene or G1-control importer. Existing SAGE generation remains a separate upstream workflow. Unknown versions/modes and implicit units are rejected.
+
+| File/version | Required fields and semantics |
+|---|---|
+| `scene_spec.json`, `evoworld.scene.v1` | `mode=reconstruction`; `generation_execution=cached_phase5_gpt_assets_no_new_inference`; `units=m`, `up_axis=Z`; source/world frame names; `world_T_source`: finite properSE(3)4×4, no scale/reflection; `objects`: unique milk,tissue,desk,tray,divider,monitor; two `dynamic_ids`; placement provenance and required built-in runtime resources |
+| Each scene object | `id`, relative contained `asset`, `prim_path`(/Asset), `pose_world`7float XYZ+wxyz(unit quaternion), `size_m`3float, `scale_xyz=[1,1,1]`, boolean `dynamic`, complete copied `physics`, `evidence` and `source_record`. World pose equals source pose composed with world_T_source exactly once. USD native material/physics internals are retained. |
+| `robot_spec.json`, `evoworld.robot.v1` | fixed-base SAGE Panda; relative robot asset(default/panda), source/world base poses,9joint names/defaults, panda_hand tool frame/zero offset, Phase6 action schema, provenance for designed base and copied geometry/defaults. Exact limits/actuators remain originalSAGE configuration and are checked live; this file does not override them. |
+| `task_spec.json`, `evoworld.task.v1` | name/description, targetmilk, seed31, physicsdt.01s/controldt.02s,100settle+30up+30return steps, designed30mm base-Z targetoffset, +1open gripper, designed simulation camera eyes/targets/resolutions, explicit acceptance tolerances, `real_robot=false`, `grasp_verified=false`. |
+
+All poses use right-handedZ-up, metres, seconds and scalar-first quaternions; arm joints use radians, fingers metres. Arraylength is never used to reinterpret G1 states/actions. No physical property is newly measured. Per-object inherited evidence distinguishes measured carton reference55×38×130mm from inferred geometry/appearance/hidden surfaces and designed mass/friction. New tabletop worldheight0.75m, robotbase[0,−0.48,0.751] with yaw+90deg and inspection cameras are simulation design, not photo-derived robot calibration. No randomization.
+
+Packaging preserves photos and source hashes, full selected GPT program, final feedback/usage, source metadata and original g1 packager manifest. `manifest-sha256.json` binds bundle files. Rebuilding this cache is not a new API run; different input photos require a new reconstruction and are outside this fixed-profile loader.
+
+`scene.usda` is the standalone composed native scene for inspection; runtime loads the same referenced assets and poses from the three specs, then reapplies original articulation joint defaults/control through SAGE. A generic static USD viewer may display the source articulation rest geometry; it is not equivalent to the initialized controller state. Verified reload means the supplied SAGE loader, not an arbitrary viewer. Built-in OmniPBR.mdl requires the existing Isaac MDL search path and is not a missing user asset.

@@ -1,0 +1,2844 @@
+--- a/IsaacLab/docs/conf.py
++++ b/IsaacLab/docs/conf.py
+@@ -139,10 +139,10 @@
+     "omni.replicator",
+     "omni.isaac.core",
+     "omni.isaac.kit",
+-    "omni.isaac.cloner",
++    "isaacsim.core.cloner",
+     "omni.isaac.urdf",
+-    "omni.isaac.version",
+-    "omni.isaac.motion_generation",
++    "isaacsim.core.version",
++    "isaacsim.robot_motion.motion_generation",
+     "omni.isaac.ui",
+     "omni.syntheticdata",
+     "omni.timeline",
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/app/app_launcher.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/app/app_launcher.py
+@@ -23,7 +23,7 @@
+ with contextlib.suppress(ModuleNotFoundError):
+     import isaacsim  # noqa: F401
+ 
+-from omni.isaac.kit import SimulationApp
++from isaacsim import SimulationApp
+ 
+ 
+ class AppLauncher:
+@@ -592,7 +592,7 @@
+         # this is to avoid the warnings from the simulation app about not ok modules
+         r = re.compile(".*lab.*")
+         found_modules = list(filter(r.match, list(sys.modules.keys())))
+-        found_modules += ["omni.isaac.kit.app_framework"]
++        found_modules += [x for x in ["omni.isaac.kit.app_framework"] if x in sys.modules]
+         # remove Isaac Lab modules from sys.modules
+         hacked_modules = dict()
+         for key in found_modules:
+@@ -629,7 +629,7 @@
+         # These have to be loaded after SimulationApp is initialized
+         import carb
+         import omni.physx.bindings._physx as physx_impl
+-        from omni.isaac.core.utils.extensions import enable_extension
++        from isaacsim.core.utils.extensions import enable_extension
+ 
+         # Retrieve carb settings for modification
+         carb_settings_iface = carb.settings.get_settings()
+@@ -664,6 +664,7 @@
+         # this flag is used by the SimulationContext class to enable the offscreen_render pipeline
+         # when the render() method is called.
+         carb_settings_iface.set_bool("/isaaclab/render/offscreen", self._offscreen_render)
++        carb_settings_iface.set_bool("/isaaclab/cameras_enabled", self._enable_cameras)
+ 
+         # set carb setting to indicate Isaac Lab's render_viewport pipeline should be enabled
+         # this flag is used by the SimulationContext class to enable the render_viewport pipeline
+@@ -680,13 +681,14 @@
+ 
+         # set the nucleus directory manually to the latest published Nucleus
+         # note: this is done to ensure prior versions of Isaac Sim still use the latest assets
+-        assets_path = "http://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.2"
++        assets_path = "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.2"
+         carb_settings_iface.set_string("/persistent/isaac/asset_root/default", assets_path)
+         carb_settings_iface.set_string("/persistent/isaac/asset_root/cloud", assets_path)
+         carb_settings_iface.set_string("/persistent/isaac/asset_root/nvidia", assets_path)
+ 
+         # disable physics backwards compatibility check
+-        carb_settings_iface.set_int(physx_impl.SETTING_BACKWARD_COMPATIBILITY, 0)
++        if hasattr(physx_impl, "SETTING_BACKWARD_COMPATIBILITY"):
++            carb_settings_iface.set_int(physx_impl.SETTING_BACKWARD_COMPATIBILITY, 0)
+ 
+     def _hide_stop_button(self):
+         """Hide the stop button in the toolbar.
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/articulation/articulation.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/articulation/articulation.py
+@@ -13,9 +13,10 @@
+ from prettytable import PrettyTable
+ from typing import TYPE_CHECKING
+ 
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.log
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ from pxr import PhysxSchema, UsdPhysics
+ 
+ import omni.isaac.lab.sim as sim_utils
+@@ -1069,7 +1070,7 @@
+ 
+     def _initialize_impl(self):
+         # create simulation view
+-        self._physics_sim_view = physx.create_simulation_view(self._backend)
++        self._physics_sim_view = physx.create_simulation_view(self._backend, stage_id=omni.usd.get_context().get_stage_id())
+         self._physics_sim_view.set_subspace_roots("/")
+         # obtain the first prim in the regex expression (all others are assumed to be a copy of this)
+         template_prim = sim_utils.find_first_matching_prim(self.cfg.prim_path)
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/articulation/articulation_data.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/articulation/articulation_data.py
+@@ -6,7 +6,8 @@
+ import torch
+ import weakref
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ 
+ import omni.isaac.lab.utils.math as math_utils
+ from omni.isaac.lab.utils.buffers import TimestampedBuffer
+@@ -48,7 +49,7 @@
+         self._sim_timestamp = 0.0
+ 
+         # Obtain global physics sim view
+-        self._physics_sim_view = physx.create_simulation_view("torch")
++        self._physics_sim_view = physx.create_simulation_view("torch", stage_id=omni.usd.get_context().get_stage_id())
+         self._physics_sim_view.set_subspace_roots("/")
+         gravity = self._physics_sim_view.get_gravity()
+         # Convert to direction vector
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/deformable_object/deformable_object.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/deformable_object/deformable_object.py
+@@ -1,3 +1,5 @@
++
++from __future__ import annotations
+ # Copyright (c) 2022-2025, The Isaac Lab Project Developers.
+ # All rights reserved.
+ #
+@@ -10,7 +12,8 @@
+ from typing import TYPE_CHECKING
+ 
+ import omni.log
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ from pxr import PhysxSchema, UsdShade
+ 
+ import omni.isaac.lab.sim as sim_utils
+@@ -262,7 +265,7 @@
+ 
+     def _initialize_impl(self):
+         # create simulation view
+-        self._physics_sim_view = physx.create_simulation_view(self._backend)
++        self._physics_sim_view = physx.create_simulation_view(self._backend, stage_id=omni.usd.get_context().get_stage_id())
+         self._physics_sim_view.set_subspace_roots("/")
+         # obtain the first prim in the regex expression (all others are assumed to be a copy of this)
+         template_prim = sim_utils.find_first_matching_prim(self.cfg.prim_path)
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/deformable_object/deformable_object_data.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/deformable_object/deformable_object_data.py
+@@ -1,3 +1,5 @@
++
++from __future__ import annotations
+ # Copyright (c) 2022-2025, The Isaac Lab Project Developers.
+ # All rights reserved.
+ #
+@@ -6,7 +8,7 @@
+ import torch
+ import weakref
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ 
+ import omni.isaac.lab.utils.math as math_utils
+ from omni.isaac.lab.utils.buffers import TimestampedBuffer
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object/rigid_object.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object/rigid_object.py
+@@ -10,7 +10,8 @@
+ from typing import TYPE_CHECKING
+ 
+ import omni.log
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ from pxr import UsdPhysics
+ 
+ import omni.isaac.lab.sim as sim_utils
+@@ -402,7 +403,7 @@
+ 
+     def _initialize_impl(self):
+         # create simulation view
+-        self._physics_sim_view = physx.create_simulation_view(self._backend)
++        self._physics_sim_view = physx.create_simulation_view(self._backend, stage_id=omni.usd.get_context().get_stage_id())
+         self._physics_sim_view.set_subspace_roots("/")
+         # obtain the first prim in the regex expression (all others are assumed to be a copy of this)
+         template_prim = sim_utils.find_first_matching_prim(self.cfg.prim_path)
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object/rigid_object_data.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object/rigid_object_data.py
+@@ -7,7 +7,8 @@
+ import weakref
+ 
+ import omni.log
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ 
+ import omni.isaac.lab.utils.math as math_utils
+ from omni.isaac.lab.utils.buffers import TimestampedBuffer
+@@ -52,7 +53,7 @@
+         self._sim_timestamp = 0.0
+ 
+         # Obtain global physics sim view
+-        physics_sim_view = physx.create_simulation_view("torch")
++        physics_sim_view = physx.create_simulation_view("torch", stage_id=omni.usd.get_context().get_stage_id())
+         physics_sim_view.set_subspace_roots("/")
+         gravity = physics_sim_view.get_gravity()
+         # Convert to direction vector
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object_collection/rigid_object_collection.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object_collection/rigid_object_collection.py
+@@ -13,7 +13,8 @@
+ 
+ import omni.kit.app
+ import omni.log
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ import omni.timeline
+ from pxr import UsdPhysics
+ 
+@@ -524,7 +525,7 @@
+ 
+     def _initialize_impl(self):
+         # create simulation view
+-        self._physics_sim_view = physx.create_simulation_view(self._backend)
++        self._physics_sim_view = physx.create_simulation_view(self._backend, stage_id=omni.usd.get_context().get_stage_id())
+         self._physics_sim_view.set_subspace_roots("/")
+         root_prim_path_exprs = []
+         for name, rigid_object_cfg in self.cfg.rigid_objects.items():
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object_collection/rigid_object_collection_data.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object_collection/rigid_object_collection_data.py
+@@ -6,7 +6,8 @@
+ import torch
+ import weakref
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ 
+ import omni.isaac.lab.utils.math as math_utils
+ from omni.isaac.lab.utils.buffers import TimestampedBuffer
+@@ -54,7 +55,7 @@
+         self._sim_timestamp = 0.0
+ 
+         # Obtain global physics sim view
+-        physics_sim_view = physx.create_simulation_view("torch")
++        physics_sim_view = physx.create_simulation_view("torch", stage_id=omni.usd.get_context().get_stage_id())
+         physics_sim_view.set_subspace_roots("/")
+         gravity = physics_sim_view.get_gravity()
+         # Convert to direction vector
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/controllers/config/rmp_flow.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/controllers/config/rmp_flow.py
+@@ -5,12 +5,12 @@
+ 
+ import os
+ 
+-from omni.isaac.core.utils.extensions import get_extension_path_from_name
++from isaacsim.core.utils.extensions import get_extension_path_from_name
+ 
+ from omni.isaac.lab.controllers.rmp_flow import RmpFlowControllerCfg
+ 
+ # Note: RMP-Flow config files for supported robots are stored in the motion_generation extension
+-_RMP_CONFIG_DIR = os.path.join(get_extension_path_from_name("omni.isaac.motion_generation"), "motion_policy_configs")
++_RMP_CONFIG_DIR = os.path.join(get_extension_path_from_name("isaacsim.robot_motion.motion_generation"), "motion_policy_configs")
+ 
+ # Path to current directory
+ _CUR_DIR = os.path.dirname(os.path.realpath(__file__))
+@@ -22,7 +22,7 @@
+     frame_name="panda_end_effector",
+     evaluations_per_frame=5,
+ )
+-"""Configuration of RMPFlow for Franka arm (default from `omni.isaac.motion_generation`)."""
++"""Configuration of RMPFlow for Franka arm (default from `isaacsim.robot_motion.motion_generation`)."""
+ 
+ 
+ UR10_RMPFLOW_CFG = RmpFlowControllerCfg(
+@@ -32,4 +32,4 @@
+     frame_name="ee_link",
+     evaluations_per_frame=5,
+ )
+-"""Configuration of RMPFlow for UR10 arm (default from `omni.isaac.motion_generation`)."""
++"""Configuration of RMPFlow for UR10 arm (default from `isaacsim.robot_motion.motion_generation`)."""
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/controllers/rmp_flow.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/controllers/rmp_flow.py
+@@ -6,11 +6,11 @@
+ import torch
+ from dataclasses import MISSING
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-from omni.isaac.core.articulations import Articulation
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.motion_generation import ArticulationMotionPolicy
+-from omni.isaac.motion_generation.lula.motion_policies import RmpFlow, RmpFlowSmoothed
++import isaacsim.core.utils.prims as prim_utils
++from isaacsim.core.prims import SingleArticulation as Articulation
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.robot_motion.motion_generation import ArticulationMotionPolicy
++from isaacsim.robot_motion.motion_generation.lula.motion_policies import RmpFlow, RmpFlowSmoothed
+ 
+ from omni.isaac.lab.utils import configclass
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/direct_marl_env.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/direct_marl_env.py
+@@ -17,10 +17,10 @@
+ from dataclasses import MISSING
+ from typing import Any, ClassVar
+ 
+-import omni.isaac.core.utils.torch as torch_utils
++import isaacsim.core.utils.torch as torch_utils
+ import omni.kit.app
+ import omni.log
+-from omni.isaac.version import get_version
++from isaacsim.core.version import get_version
+ 
+ from omni.isaac.lab.managers import EventManager
+ from omni.isaac.lab.scene import InteractiveScene
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/direct_rl_env.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/direct_rl_env.py
+@@ -17,10 +17,10 @@
+ from dataclasses import MISSING
+ from typing import Any, ClassVar
+ 
+-import omni.isaac.core.utils.torch as torch_utils
++import isaacsim.core.utils.torch as torch_utils
+ import omni.kit.app
+ import omni.log
+-from omni.isaac.version import get_version
++from isaacsim.core.version import get_version
+ 
+ from omni.isaac.lab.managers import EventManager
+ from omni.isaac.lab.scene import InteractiveScene
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/manager_based_env.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/manager_based_env.py
+@@ -8,7 +8,7 @@
+ from collections.abc import Sequence
+ from typing import Any
+ 
+-import omni.isaac.core.utils.torch as torch_utils
++import isaacsim.core.utils.torch as torch_utils
+ import omni.log
+ 
+ from omni.isaac.lab.managers import ActionManager, EventManager, ObservationManager, RecorderManager
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/manager_based_rl_env.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/manager_based_rl_env.py
+@@ -13,7 +13,7 @@
+ from collections.abc import Sequence
+ from typing import Any, ClassVar
+ 
+-from omni.isaac.version import get_version
++from isaacsim.core.version import get_version
+ 
+ from omni.isaac.lab.managers import CommandManager, CurriculumManager, RewardManager, TerminationManager
+ from omni.isaac.lab.ui.widgets import ManagerLiveVisualizer
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/mdp/events.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/mdp/events.py
+@@ -18,7 +18,7 @@
+ from typing import TYPE_CHECKING, Literal
+ 
+ import carb
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ 
+ import omni.isaac.lab.sim as sim_utils
+ import omni.isaac.lab.utils.math as math_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/markers/visualization_markers.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/markers/visualization_markers.py
+@@ -23,7 +23,7 @@
+ import torch
+ from dataclasses import MISSING
+ 
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.kit.commands
+ import omni.physx.scripts.utils as physx_utils
+ from pxr import Gf, PhysxSchema, Sdf, Usd, UsdGeom, UsdPhysics, Vt
+@@ -64,7 +64,7 @@
+     The class parses the configuration to create different the marker prototypes into the stage. Each marker
+     prototype prim is created as a child of the :class:`UsdGeom.PointInstancer` prim. The prim path for the
+     the marker prim is resolved using the key of the marker in the :attr:`VisualizationMarkersCfg.markers`
+-    dictionary. The marker prototypes are created using the :meth:`omni.isaac.core.utils.create_prim`
++    dictionary. The marker prototypes are created using the :meth:`isaacsim.core.utils.create_prim`
+     function, and then then instanced using :class:`UsdGeom.PointInstancer` prim to allow creating multiple
+     instances of the marker prims.
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/scene/interactive_scene.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/scene/interactive_scene.py
+@@ -9,8 +9,8 @@
+ 
+ import carb
+ import omni.usd
+-from omni.isaac.cloner import GridCloner
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.cloner import GridCloner
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from pxr import PhysxSchema
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/camera/camera.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/camera/camera.py
+@@ -12,10 +12,10 @@
+ from typing import TYPE_CHECKING, Any, Literal
+ 
+ import carb
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.kit.commands
+ import omni.usd
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from pxr import UsdGeom
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/camera/tiled_camera.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/camera/tiled_camera.py
+@@ -14,8 +14,8 @@
+ import carb
+ import omni.usd
+ import warp as wp
+-from omni.isaac.core.prims import XFormPrimView
+-from omni.isaac.version import get_version
++from isaacsim.core.prims import XFormPrim as XFormPrimView
++from isaacsim.core.version import get_version
+ from pxr import UsdGeom
+ 
+ from omni.isaac.lab.utils.warp.kernels import reshape_tiled_image
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/contact_sensor/contact_sensor.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/contact_sensor/contact_sensor.py
+@@ -12,7 +12,8 @@
+ from collections.abc import Sequence
+ from typing import TYPE_CHECKING
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ from pxr import PhysxSchema
+ 
+ import omni.isaac.lab.sim as sim_utils
+@@ -244,7 +245,7 @@
+     def _initialize_impl(self):
+         super()._initialize_impl()
+         # create simulation view
+-        self._physics_sim_view = physx.create_simulation_view(self._backend)
++        self._physics_sim_view = physx.create_simulation_view(self._backend, stage_id=omni.usd.get_context().get_stage_id())
+         self._physics_sim_view.set_subspace_roots("/")
+         # check that only rigid bodies are selected
+         leaf_pattern = self.cfg.prim_path.rsplit("/", 1)[-1]
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/frame_transformer/frame_transformer.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/frame_transformer/frame_transformer.py
+@@ -11,7 +11,8 @@
+ from typing import TYPE_CHECKING
+ 
+ import omni.log
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ from pxr import UsdPhysics
+ 
+ import omni.isaac.lab.sim as sim_utils
+@@ -211,7 +212,7 @@
+         body_names_regex = [tracked_prim_path.replace("env_0", "env_*") for tracked_prim_path in tracked_prim_paths]
+ 
+         # Create simulation view
+-        self._physics_sim_view = physx.create_simulation_view(self._backend)
++        self._physics_sim_view = physx.create_simulation_view(self._backend, stage_id=omni.usd.get_context().get_stage_id())
+         self._physics_sim_view.set_subspace_roots("/")
+         # Create a prim view for all frames and initialize it
+         # order of transforms coming out of view will be source frame followed by target frame(s)
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/imu/imu.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/imu/imu.py
+@@ -9,8 +9,9 @@
+ from collections.abc import Sequence
+ from typing import TYPE_CHECKING
+ 
+-import omni.isaac.core.utils.stage as stage_utils
+-import omni.physics.tensors.impl.api as physx
++import isaacsim.core.utils.stage as stage_utils
++import omni.physics.tensors.api as physx
++import omni.usd
+ from pxr import UsdPhysics
+ 
+ import omni.isaac.lab.sim as sim_utils
+@@ -124,7 +125,7 @@
+         # Initialize parent class
+         super()._initialize_impl()
+         # create simulation view
+-        self._physics_sim_view = physx.create_simulation_view(self._backend)
++        self._physics_sim_view = physx.create_simulation_view(self._backend, stage_id=omni.usd.get_context().get_stage_id())
+         self._physics_sim_view.set_subspace_roots("/")
+         # check if the prim at path is a rigid prim
+         prim = sim_utils.find_first_matching_prim(self.cfg.prim_path)
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/ray_caster/ray_caster.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/ray_caster/ray_caster.py
+@@ -12,9 +12,10 @@
+ from typing import TYPE_CHECKING
+ 
+ import omni.log
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
++import omni.usd
+ import warp as wp
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from pxr import UsdGeom, UsdPhysics
+ 
+ import omni.isaac.lab.sim as sim_utils
+@@ -119,7 +120,7 @@
+     def _initialize_impl(self):
+         super()._initialize_impl()
+         # create simulation view
+-        self._physics_sim_view = physx.create_simulation_view(self._backend)
++        self._physics_sim_view = physx.create_simulation_view(self._backend, stage_id=omni.usd.get_context().get_stage_id())
+         self._physics_sim_view.set_subspace_roots("/")
+         # check if the prim at path is an articulated or rigid prim
+         # we do this since for physics-based view classes we can access their data directly
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/ray_caster/ray_caster_camera.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/ray_caster/ray_caster_camera.py
+@@ -9,9 +9,9 @@
+ from collections.abc import Sequence
+ from typing import TYPE_CHECKING, ClassVar, Literal
+ 
+-import omni.isaac.core.utils.stage as stage_utils
+-import omni.physics.tensors.impl.api as physx
+-from omni.isaac.core.prims import XFormPrimView
++import isaacsim.core.utils.stage as stage_utils
++import omni.physics.tensors.api as physx
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ 
+ import omni.isaac.lab.utils.math as math_utils
+ from omni.isaac.lab.sensors.camera import CameraData
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/converters/mesh_converter.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/converters/mesh_converter.py
+@@ -9,7 +9,7 @@
+ import omni
+ import omni.kit.commands
+ import omni.usd
+-from omni.isaac.core.utils.extensions import enable_extension
++from isaacsim.core.utils.extensions import enable_extension
+ from pxr import Gf, Tf, Usd, UsdGeom, UsdPhysics, UsdUtils
+ 
+ from omni.isaac.lab.sim.converters.asset_converter_base import AssetConverterBase
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/converters/mjcf_converter.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/converters/mjcf_converter.py
+@@ -9,7 +9,7 @@
+ 
+ import omni.kit.commands
+ import omni.usd
+-from omni.isaac.core.utils.extensions import enable_extension
++from isaacsim.core.utils.extensions import enable_extension
+ from pxr import Usd
+ 
+ from .asset_converter_base import AssetConverterBase
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/converters/urdf_converter.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/converters/urdf_converter.py
+@@ -9,8 +9,8 @@
+ 
+ import omni.kit.commands
+ import omni.usd
+-from omni.isaac.core.utils.extensions import enable_extension
+-from omni.isaac.version import get_version
++from isaacsim.core.utils.extensions import enable_extension
++from isaacsim.core.version import get_version
+ from pxr import Usd
+ 
+ from .asset_converter_base import AssetConverterBase
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/schemas/schemas.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/schemas/schemas.py
+@@ -6,7 +6,7 @@
+ # needed to import for allowing type-hinting: Usd.Stage | None
+ from __future__ import annotations
+ 
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.log
+ import omni.physx.scripts.utils as physx_utils
+ from omni.physx.scripts import deformableUtils as deformable_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/simulation_context.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/simulation_context.py
+@@ -15,12 +15,12 @@
+ from typing import Any
+ 
+ import carb
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.log
+ import omni.physx
+-from omni.isaac.core.simulation_context import SimulationContext as _SimulationContext
+-from omni.isaac.core.utils.viewports import set_camera_view
+-from omni.isaac.version import get_version
++from isaacsim.core.api.simulation_context import SimulationContext as _SimulationContext
++from isaacsim.core.utils.viewports import set_camera_view
++from isaacsim.core.version import get_version
+ from pxr import Gf, PhysxSchema, Usd, UsdPhysics
+ 
+ from .simulation_cfg import SimulationCfg
+@@ -38,7 +38,7 @@
+     * playing, pausing, stepping and stopping the simulation
+     * adding and removing callbacks to different simulation events such as physics stepping, rendering, etc.
+ 
+-    This class inherits from the :class:`omni.isaac.core.simulation_context.SimulationContext` class and
++    This class inherits from the :class:`isaacsim.core.api.simulation_context.SimulationContext` class and
+     adds additional functionalities such as setting up the simulation context with a configuration object,
+     exposing other commonly used simulator-related functions, and performing version checks of Isaac Sim
+     to ensure compatibility between releases.
+@@ -306,7 +306,7 @@
+     def get_version(self) -> tuple[int, int, int]:
+         """Returns the version of the simulator.
+ 
+-        This is a wrapper around the ``omni.isaac.version.get_version()`` function.
++        This is a wrapper around the ``isaacsim.core.version.get_version()`` function.
+ 
+         The returned tuple contains the following information:
+ 
+@@ -329,7 +329,7 @@
+         """Set the location and target of the viewport camera in the stage.
+ 
+         Note:
+-            This is a wrapper around the :math:`omni.isaac.core.utils.viewports.set_camera_view` function.
++            This is a wrapper around the :math:`isaacsim.core.utils.viewports.set_camera_view` function.
+             It is provided here for convenience to reduce the amount of imports needed.
+ 
+         Args:
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/from_files/from_files.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/from_files/from_files.py
+@@ -7,8 +7,8 @@
+ 
+ from typing import TYPE_CHECKING
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.kit.commands
+ import omni.log
+ from pxr import Gf, Sdf, Usd
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/lights/lights.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/lights/lights.py
+@@ -7,7 +7,7 @@
+ 
+ from typing import TYPE_CHECKING
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from pxr import Usd, UsdLux
+ 
+ from omni.isaac.lab.sim.utils import clone, safe_set_attribute_on_usd_prim
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/materials/__init__.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/materials/__init__.py
+@@ -31,7 +31,7 @@
+ Usage:
+     .. code-block:: python
+ 
+-        import omni.isaac.core.utils.prims as prim_utils
++        import isaacsim.core.utils.prims as prim_utils
+ 
+         import omni.isaac.lab.sim as sim_utils
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/materials/physics_materials.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/materials/physics_materials.py
+@@ -7,8 +7,8 @@
+ 
+ from typing import TYPE_CHECKING
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
+ from pxr import PhysxSchema, Usd, UsdPhysics, UsdShade
+ 
+ from omni.isaac.lab.sim.utils import clone, safe_set_attribute_on_usd_schema
+@@ -66,6 +66,10 @@
+     for attr_name in ["static_friction", "dynamic_friction", "restitution"]:
+         value = cfg.pop(attr_name, None)
+         safe_set_attribute_on_usd_schema(usd_physics_material_api, attr_name, value, camel_case=True)
++    # PhysX 6 removed the legacy toggle; improved patch friction is the only behavior.
++    if not hasattr(physx_material_api, "CreateImprovePatchFrictionAttr"):
++        if cfg.pop("improve_patch_friction", True) is False:
++            raise NotImplementedError("Legacy non-improved patch friction unavailable on this SDK")
+     # set into PhysX API
+     for attr_name, value in cfg.items():
+         safe_set_attribute_on_usd_schema(physx_material_api, attr_name, value, camel_case=True)
+@@ -116,6 +120,10 @@
+     # convert to dict
+     cfg = cfg.to_dict()
+     del cfg["func"]
++    # PhysX 6 removed the legacy toggle; improved patch friction is the only behavior.
++    if not hasattr(physx_material_api, "CreateImprovePatchFrictionAttr"):
++        if cfg.pop("improve_patch_friction", True) is False:
++            raise NotImplementedError("Legacy non-improved patch friction unavailable on this SDK")
+     # set into PhysX API
+     for attr_name, value in cfg.items():
+         safe_set_attribute_on_usd_schema(physx_deformable_body_material_api, attr_name, value, camel_case=True)
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/materials/visual_materials.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/materials/visual_materials.py
+@@ -7,7 +7,7 @@
+ 
+ from typing import TYPE_CHECKING
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ import omni.kit.commands
+ from pxr import Usd
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/meshes/meshes.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/meshes/meshes.py
+@@ -10,7 +10,7 @@
+ import trimesh.transformations
+ from typing import TYPE_CHECKING
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from pxr import Usd, UsdPhysics
+ 
+ from omni.isaac.lab.sim import schemas
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/sensors/sensors.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/sensors/sensors.py
+@@ -7,7 +7,7 @@
+ 
+ from typing import TYPE_CHECKING
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ import omni.kit.commands
+ import omni.log
+ from pxr import Sdf, Usd
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/shapes/shapes.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/shapes/shapes.py
+@@ -7,7 +7,7 @@
+ 
+ from typing import TYPE_CHECKING
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from pxr import Usd
+ 
+ from omni.isaac.lab.sim import schemas
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/wrappers/wrappers.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/wrappers/wrappers.py
+@@ -10,8 +10,8 @@
+ from typing import TYPE_CHECKING
+ 
+ import carb
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
+ from pxr import Sdf, Usd
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/utils.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/utils.py
+@@ -13,10 +13,10 @@
+ from collections.abc import Callable
+ from typing import TYPE_CHECKING, Any
+ 
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.kit.commands
+ import omni.log
+-from omni.isaac.cloner import Cloner
++from isaacsim.core.cloner import Cloner
+ from pxr import PhysxSchema, Sdf, Usd, UsdGeom, UsdPhysics, UsdShade
+ 
+ # from Isaac Sim 4.2 onwards, pxr.Semantics is deprecated
+@@ -388,7 +388,7 @@
+     # check if prim has collision applied on it
+     has_physics_scene_api = prim.HasAPI(PhysxSchema.PhysxSceneAPI)
+     has_collider = prim.HasAPI(UsdPhysics.CollisionAPI)
+-    has_deformable_body = prim.HasAPI(PhysxSchema.PhysxDeformableBodyAPI)
++    has_deformable_body = (hasattr(PhysxSchema, "PhysxDeformableBodyAPI") and prim.HasAPI(PhysxSchema.PhysxDeformableBodyAPI))
+     has_particle_system = prim.IsA(PhysxSchema.PhysxParticleSystem)
+     if not (has_physics_scene_api or has_collider or has_deformable_body or has_particle_system):
+         omni.log.verbose(
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/terrains/utils.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/terrains/utils.py
+@@ -80,7 +80,7 @@
+         physics_material: The physics material to apply. Defaults to None.
+     """
+     # need to import these here to prevent isaacsim launching when importing this module
+-    import omni.isaac.core.utils.prims as prim_utils
++    import isaacsim.core.utils.prims as prim_utils
+     from pxr import UsdGeom
+ 
+     import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/ui/widgets/line_plot.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/ui/widgets/line_plot.py
+@@ -10,7 +10,7 @@
+ from typing import TYPE_CHECKING
+ 
+ import omni
+-from omni.isaac.core.simulation_context import SimulationContext
++from isaacsim.core.api.simulation_context import SimulationContext
+ 
+ from .ui_widget_wrapper import UIWidgetWrapper
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/ui/widgets/manager_live_visualizer.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/ui/widgets/manager_live_visualizer.py
+@@ -12,7 +12,7 @@
+ 
+ import carb
+ import omni.kit.app
+-from omni.isaac.core.simulation_context import SimulationContext
++from isaacsim.core.api.simulation_context import SimulationContext
+ 
+ from omni.isaac.lab.managers import ManagerBase
+ from omni.isaac.lab.utils import configclass
+--- a/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/utils/assets.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/utils/assets.py
+@@ -21,7 +21,7 @@
+ import carb
+ import omni.client
+ 
+-NUCLEUS_ASSET_ROOT_DIR = carb.settings.get_settings().get("/persistent/isaac/asset_root/cloud")
++NUCLEUS_ASSET_ROOT_DIR = os.environ.get("EVOWORLD_SAGE_ASSET_ROOT", carb.settings.get_settings().get("/persistent/isaac/asset_root/default"))
+ """Path to the root directory on the Nucleus Server."""
+ 
+ NVIDIA_NUCLEUS_DIR = f"{NUCLEUS_ASSET_ROOT_DIR}/NVIDIA"
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/assets/check_fixed_base_assets.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/assets/check_fixed_base_assets.py
+@@ -35,7 +35,7 @@
+ import numpy as np
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_articulation.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_articulation.py
+@@ -23,7 +23,7 @@
+ import unittest
+ from typing import Literal
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ import omni.isaac.lab.utils.math as math_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_deformable_object.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_deformable_object.py
+@@ -25,7 +25,7 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ import omni.isaac.lab.utils.math as math_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_rigid_object.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_rigid_object.py
+@@ -26,7 +26,7 @@
+ import unittest
+ from typing import Literal
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_rigid_object_collection.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_rigid_object_collection.py
+@@ -25,7 +25,7 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import RigidObjectCfg, RigidObjectCollection, RigidObjectCollectionCfg
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/controllers/test_differential_ik.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/controllers/test_differential_ik.py
+@@ -15,9 +15,9 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.cloner import GridCloner
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.cloner import GridCloner
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/controllers/test_operational_space.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/controllers/test_operational_space.py
+@@ -15,9 +15,9 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.cloner import GridCloner
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.cloner import GridCloner
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_camera.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_camera.py
+@@ -48,14 +48,14 @@
+ try:
+     import omni.isaac.nucleus as nucleus_utils
+ except ModuleNotFoundError:
+-    import omni.isaac.core.utils.nucleus as nucleus_utils
+-import omni.isaac.core.utils.prims as prim_utils
++    import isaacsim.storage.native as nucleus_utils
++import isaacsim.core.utils.prims as prim_utils
+ import omni.replicator.core as rep
+-from omni.isaac.core.articulations import ArticulationView
+-from omni.isaac.core.prims import GeometryPrim, RigidPrim, RigidPrimView
+-from omni.isaac.core.utils.carb import set_carb_setting
+-from omni.isaac.core.utils.viewports import set_camera_view
+-from omni.isaac.core.world import World
++from isaacsim.core.prims import Articulation as ArticulationView
++from isaacsim.core.prims import SingleGeometryPrim as GeometryPrim, SingleRigidPrim as RigidPrim, RigidPrim as RigidPrimView
++from isaacsim.core.utils.carb import set_carb_setting
++from isaacsim.core.utils.viewports import set_camera_view
++from isaacsim.core.api.world import World
+ from PIL import Image, ImageChops
+ from pxr import Gf, UsdGeom
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_floating_base_made_fixed.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_floating_base_made_fixed.py
+@@ -14,7 +14,7 @@
+ with contextlib.suppress(ModuleNotFoundError):
+     import isaacsim  # noqa: F401
+ 
+-from omni.isaac.kit import SimulationApp
++from isaacsim import SimulationApp
+ 
+ # add argparse arguments
+ parser = argparse.ArgumentParser(
+@@ -32,16 +32,16 @@
+ 
+ import torch
+ 
+-import omni.isaac.core.utils.nucleus as nucleus_utils
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.storage.native as nucleus_utils
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.kit.commands
+ import omni.log
+ import omni.physx
+-from omni.isaac.core.articulations import ArticulationView
+-from omni.isaac.core.utils.carb import set_carb_setting
+-from omni.isaac.core.utils.viewports import set_camera_view
+-from omni.isaac.core.world import World
++from isaacsim.core.prims import Articulation as ArticulationView
++from isaacsim.core.utils.carb import set_carb_setting
++from isaacsim.core.utils.viewports import set_camera_view
++from isaacsim.core.api.world import World
+ from pxr import PhysxSchema, UsdPhysics
+ 
+ # check nucleus connection
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_legged_robot_clone.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_legged_robot_clone.py
+@@ -18,7 +18,7 @@
+ with contextlib.suppress(ModuleNotFoundError):
+     import isaacsim  # noqa: F401
+ 
+-from omni.isaac.kit import SimulationApp
++from isaacsim import SimulationApp
+ 
+ # add argparse arguments
+ parser = argparse.ArgumentParser(
+@@ -48,13 +48,13 @@
+ try:
+     import omni.isaac.nucleus as nucleus_utils
+ except ModuleNotFoundError:
+-    import omni.isaac.core.utils.nucleus as nucleus_utils
+-import omni.isaac.core.utils.prims as prim_utils
+-from omni.isaac.cloner import GridCloner
+-from omni.isaac.core.articulations import ArticulationView
+-from omni.isaac.core.utils.carb import set_carb_setting
+-from omni.isaac.core.utils.viewports import set_camera_view
+-from omni.isaac.core.world import World
++    import isaacsim.storage.native as nucleus_utils
++import isaacsim.core.utils.prims as prim_utils
++from isaacsim.core.cloner import GridCloner
++from isaacsim.core.prims import Articulation as ArticulationView
++from isaacsim.core.utils.carb import set_carb_setting
++from isaacsim.core.utils.viewports import set_camera_view
++from isaacsim.core.api.world import World
+ 
+ # check nucleus connection
+ if nucleus_utils.get_assets_root_path() is None:
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_ref_count.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_ref_count.py
+@@ -26,7 +26,7 @@
+ with contextlib.suppress(ModuleNotFoundError):
+     import isaacsim  # noqa: F401
+ 
+-from omni.isaac.kit import SimulationApp
++from isaacsim import SimulationApp
+ 
+ # launch omniverse app
+ simulation_app = SimulationApp({"headless": True})
+@@ -42,12 +42,12 @@
+ try:
+     import omni.isaac.nucleus as nucleus_utils
+ except ModuleNotFoundError:
+-    import omni.isaac.core.utils.nucleus as nucleus_utils
++    import isaacsim.storage.native as nucleus_utils
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-from omni.isaac.core.articulations import ArticulationView
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.carb import set_carb_setting
++import isaacsim.core.utils.prims as prim_utils
++from isaacsim.core.prims import Articulation as ArticulationView
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.carb import set_carb_setting
+ 
+ # check nucleus connection
+ if nucleus_utils.get_assets_root_path() is None:
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_rep_texture_randomizer.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_rep_texture_randomizer.py
+@@ -45,13 +45,13 @@
+ import numpy as np
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ import omni.replicator.core as rep
+-from omni.isaac.cloner import GridCloner
+-from omni.isaac.core.objects import DynamicSphere
+-from omni.isaac.core.prims import RigidPrimView
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.viewports import set_camera_view
++from isaacsim.core.cloner import GridCloner
++from isaacsim.core.api.objects import DynamicSphere
++from isaacsim.core.prims import RigidPrim as RigidPrimView
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.viewports import set_camera_view
+ 
+ 
+ def main():
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/devices/check_keyboard.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/devices/check_keyboard.py
+@@ -23,7 +23,7 @@
+ 
+ import ctypes
+ 
+-from omni.isaac.core.simulation_context import SimulationContext
++from isaacsim.core.api.simulation_context import SimulationContext
+ 
+ from omni.isaac.lab.devices import Se3Keyboard
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/envs/test_manager_based_rl_env_ui.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/envs/test_manager_based_rl_env_ui.py
+@@ -25,7 +25,7 @@
+ 
+ import carb
+ import omni.usd
+-from omni.isaac.core.utils.extensions import enable_extension
++from isaacsim.core.utils.extensions import enable_extension
+ 
+ from omni.isaac.lab.envs import ManagerBasedRLEnv, ManagerBasedRLEnvCfg
+ from omni.isaac.lab.envs.ui import ManagerBasedRLEnvWindow
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/markers/test_visualization_markers.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/markers/test_visualization_markers.py
+@@ -16,8 +16,8 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.markers import VisualizationMarkers, VisualizationMarkersCfg
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/performance/test_robot_load_performance.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/performance/test_robot_load_performance.py
+@@ -16,7 +16,7 @@
+ import unittest
+ 
+ import omni
+-from omni.isaac.cloner import GridCloner
++from isaacsim.core.cloner import GridCloner
+ 
+ from omni.isaac.lab_assets import ANYMAL_D_CFG, CARTPOLE_CFG
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/check_contact_sensor.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/check_contact_sensor.py
+@@ -36,11 +36,11 @@
+ 
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-from omni.isaac.cloner import GridCloner
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.carb import set_carb_setting
+-from omni.isaac.core.utils.viewports import set_camera_view
++import isaacsim.core.utils.prims as prim_utils
++from isaacsim.core.cloner import GridCloner
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.carb import set_carb_setting
++from isaacsim.core.utils.viewports import set_camera_view
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/check_imu_sensor.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/check_imu_sensor.py
+@@ -13,7 +13,7 @@
+ 
+ import argparse
+ 
+-from omni.isaac.kit import SimulationApp
++from isaacsim import SimulationApp
+ 
+ # add argparse arguments
+ parser = argparse.ArgumentParser(description="Imu Test Script")
+@@ -40,9 +40,9 @@
+ 
+ import carb
+ import omni
+-from omni.isaac.cloner import GridCloner
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.viewports import set_camera_view
++from isaacsim.core.cloner import GridCloner
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.viewports import set_camera_view
+ from pxr import PhysxSchema
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/check_ray_caster.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/check_ray_caster.py
+@@ -41,11 +41,11 @@
+ 
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-from omni.isaac.cloner import GridCloner
+-from omni.isaac.core.prims import RigidPrimView
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.viewports import set_camera_view
++import isaacsim.core.utils.prims as prim_utils
++from isaacsim.core.cloner import GridCloner
++from isaacsim.core.prims import RigidPrim as RigidPrimView
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.viewports import set_camera_view
+ 
+ import omni.isaac.lab.sim as sim_utils
+ import omni.isaac.lab.terrains as terrain_gen
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_camera.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_camera.py
+@@ -24,10 +24,10 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.replicator.core as rep
+-from omni.isaac.core.prims import GeometryPrim, RigidPrim
++from isaacsim.core.prims import SingleGeometryPrim as GeometryPrim, SingleRigidPrim as RigidPrim
+ from pxr import Gf, Usd, UsdGeom
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_frame_transformer.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_frame_transformer.py
+@@ -18,7 +18,7 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ import omni.isaac.lab.utils.math as math_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_imu.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_imu.py
+@@ -17,7 +17,7 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ import omni.isaac.lab.utils.math as math_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_ray_caster_camera.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_ray_caster_camera.py
+@@ -22,8 +22,8 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.replicator.core as rep
+ from pxr import Gf
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_tiled_camera.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_tiled_camera.py
+@@ -22,10 +22,10 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.replicator.core as rep
+-from omni.isaac.core.prims import GeometryPrim, RigidPrim
++from isaacsim.core.prims import SingleGeometryPrim as GeometryPrim, SingleRigidPrim as RigidPrim
+ from pxr import Gf, UsdGeom
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/check_meshes.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/check_meshes.py
+@@ -40,7 +40,7 @@
+ import torch
+ import tqdm
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_build_simulation_context_headless.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_build_simulation_context_headless.py
+@@ -23,7 +23,7 @@
+ 
+ import unittest
+ 
+-from omni.isaac.core.utils.prims import is_prim_path_valid
++from isaacsim.core.utils.prims import is_prim_path_valid
+ 
+ from omni.isaac.lab.sim.simulation_cfg import SimulationCfg
+ from omni.isaac.lab.sim.simulation_context import build_simulation_context
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_build_simulation_context_nonheadless.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_build_simulation_context_nonheadless.py
+@@ -22,7 +22,7 @@
+ 
+ import unittest
+ 
+-from omni.isaac.core.utils.prims import is_prim_path_valid
++from isaacsim.core.utils.prims import is_prim_path_valid
+ 
+ from omni.isaac.lab.sim.simulation_cfg import SimulationCfg
+ from omni.isaac.lab.sim.simulation_context import build_simulation_context
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_mesh_converter.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_mesh_converter.py
+@@ -19,9 +19,9 @@
+ import unittest
+ 
+ import omni
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
+ from pxr import UsdGeom, UsdPhysics
+ 
+ from omni.isaac.lab.sim.converters import MeshConverter, MeshConverterCfg
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_mjcf_converter.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_mjcf_converter.py
+@@ -17,10 +17,10 @@
+ import os
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.extensions import enable_extension, get_extension_path_from_name
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.extensions import enable_extension, get_extension_path_from_name
+ 
+ from omni.isaac.lab.sim.converters import MjcfConverter, MjcfConverterCfg
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_schemas.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_schemas.py
+@@ -14,9 +14,9 @@
+ 
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
+ from pxr import UsdPhysics
+ 
+ import omni.isaac.lab.sim.schemas as schemas
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_simulation_context.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_simulation_context.py
+@@ -15,8 +15,8 @@
+ import numpy as np
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-from omni.isaac.core.simulation_context import SimulationContext as IsaacSimulationContext
++import isaacsim.core.utils.prims as prim_utils
++from isaacsim.core.api.simulation_context import SimulationContext as IsaacSimulationContext
+ 
+ from omni.isaac.lab.sim import SimulationCfg, SimulationContext
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_from_files.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_from_files.py
+@@ -14,10 +14,10 @@
+ 
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.extensions import enable_extension, get_extension_path_from_name
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.extensions import enable_extension, get_extension_path_from_name
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.utils.assets import ISAACLAB_NUCLEUS_DIR
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_lights.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_lights.py
+@@ -14,9 +14,9 @@
+ 
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
+ from pxr import UsdLux
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_materials.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_materials.py
+@@ -14,9 +14,9 @@
+ 
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
+ from pxr import UsdPhysics, UsdShade
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_meshes.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_meshes.py
+@@ -14,9 +14,9 @@
+ 
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
+ 
+ import omni.isaac.lab.sim as sim_utils
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_sensors.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_sensors.py
+@@ -14,9 +14,9 @@
+ 
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.sim.spawners.sensors.sensors import (
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_shapes.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_shapes.py
+@@ -14,9 +14,9 @@
+ 
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
+ 
+ import omni.isaac.lab.sim as sim_utils
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_wrappers.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_wrappers.py
+@@ -14,9 +14,9 @@
+ 
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.simulation_context import SimulationContext
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.api.simulation_context import SimulationContext
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.utils.assets import ISAACLAB_NUCLEUS_DIR
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_urdf_converter.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_urdf_converter.py
+@@ -18,11 +18,11 @@
+ import os
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
+-from omni.isaac.core.articulations import ArticulationView
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.extensions import enable_extension, get_extension_path_from_name
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
++from isaacsim.core.prims import Articulation as ArticulationView
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.extensions import enable_extension, get_extension_path_from_name
+ 
+ from omni.isaac.lab.sim.converters import UrdfConverter, UrdfConverterCfg
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_utils.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_utils.py
+@@ -16,8 +16,8 @@
+ import numpy as np
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.prims as prim_utils
++import isaacsim.core.utils.stage as stage_utils
+ from pxr import Sdf, Usd, UsdGeom
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/terrains/check_terrain_importer.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/terrains/check_terrain_importer.py
+@@ -64,16 +64,16 @@
+ 
+ import numpy as np
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ import omni.kit
+ import omni.kit.commands
+-from omni.isaac.cloner import GridCloner
+-from omni.isaac.core.materials import PhysicsMaterial, PreviewSurface
+-from omni.isaac.core.objects import DynamicSphere
+-from omni.isaac.core.prims import GeometryPrim, RigidPrim, RigidPrimView
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.extensions import enable_extension
+-from omni.isaac.core.utils.viewports import set_camera_view
++from isaacsim.core.cloner import GridCloner
++from isaacsim.core.api.materials import PhysicsMaterial, PreviewSurface
++from isaacsim.core.api.objects import DynamicSphere
++from isaacsim.core.prims import SingleGeometryPrim as GeometryPrim, SingleRigidPrim as RigidPrim, RigidPrim as RigidPrimView
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.extensions import enable_extension
++from isaacsim.core.utils.viewports import set_camera_view
+ 
+ import omni.isaac.lab.sim as sim_utils
+ import omni.isaac.lab.terrains as terrain_gen
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/terrains/test_terrain_generator.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/terrains/test_terrain_generator.py
+@@ -18,7 +18,7 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.torch as torch_utils
++import isaacsim.core.utils.torch as torch_utils
+ 
+ from omni.isaac.lab.terrains import FlatPatchSamplingCfg, TerrainGenerator, TerrainGeneratorCfg
+ from omni.isaac.lab.terrains.config.rough import ROUGH_TERRAINS_CFG
+--- a/IsaacLab/source/extensions/omni.isaac.lab/test/terrains/test_terrain_importer.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab/test/terrains/test_terrain_importer.py
+@@ -16,14 +16,14 @@
+ import torch
+ import unittest
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ import omni.kit
+ import omni.kit.commands
+-from omni.isaac.cloner import GridCloner
+-from omni.isaac.core.materials import PhysicsMaterial, PreviewSurface
+-from omni.isaac.core.objects import DynamicSphere
+-from omni.isaac.core.prims import GeometryPrim, RigidPrim, RigidPrimView
+-from omni.isaac.core.utils.extensions import enable_extension
++from isaacsim.core.cloner import GridCloner
++from isaacsim.core.api.materials import PhysicsMaterial, PreviewSurface
++from isaacsim.core.api.objects import DynamicSphere
++from isaacsim.core.prims import SingleGeometryPrim as GeometryPrim, SingleRigidPrim as RigidPrim, RigidPrim as RigidPrimView
++from isaacsim.core.utils.extensions import enable_extension
+ 
+ import omni.isaac.lab.terrains as terrain_gen
+ from omni.isaac.lab.sim import SimulationContext, build_simulation_context
+--- a/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/__init__.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/__init__.py
+@@ -27,4 +27,8 @@
+ # The blacklist is used to prevent importing configs from sub-packages
+ _BLACKLIST_PKGS = ["utils", ".mdp"]
+ # Import all configs in this package
+-import_packages(__name__, _BLACKLIST_PKGS)
++if os.environ.get("EVOWORLD_SAGE_FRANKA_ONLY") == "1":
++    import importlib
++    importlib.import_module(__name__ + ".manager_based.manipulation.lift_single_obj_scene.config.franka")
++else:
++    import_packages(__name__, _BLACKLIST_PKGS)
+--- a/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/factory/factory_control.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/factory/factory_control.py
+@@ -11,7 +11,7 @@
+ import math
+ import torch
+ 
+-import omni.isaac.core.utils.torch as torch_utils
++import isaacsim.core.utils.torch as torch_utils
+ 
+ from omni.isaac.lab.utils.math import axis_angle_from_quat
+ 
+--- a/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/factory/factory_env.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/factory/factory_env.py
+@@ -7,7 +7,7 @@
+ import torch
+ 
+ import carb
+-import omni.isaac.core.utils.torch as torch_utils
++import isaacsim.core.utils.torch as torch_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/franka_cabinet/franka_cabinet_env.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/franka_cabinet/franka_cabinet_env.py
+@@ -7,8 +7,8 @@
+ 
+ import torch
+ 
+-from omni.isaac.core.utils.stage import get_current_stage
+-from omni.isaac.core.utils.torch.transformations import tf_combine, tf_inverse, tf_vector
++from isaacsim.core.utils.stage import get_current_stage
++from isaacsim.core.utils.torch.transformations import tf_combine, tf_inverse, tf_vector
+ from pxr import UsdGeom
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/locomotion/locomotion_env.py
++++ b/IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/locomotion/locomotion_env.py
+@@ -7,8 +7,8 @@
+ 
+ import torch
+ 
+-import omni.isaac.core.utils.torch as torch_utils
+-from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
++import isaacsim.core.utils.torch as torch_utils
++from isaacsim.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/standalone/benchmarks/benchmark_cameras.py
++++ b/IsaacLab/source/standalone/benchmarks/benchmark_cameras.py
+@@ -245,9 +245,9 @@
+ import time
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ import psutil
+-from omni.isaac.core.utils.stage import create_new_stage
++from isaacsim.core.utils.stage import create_new_stage
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg
+--- a/IsaacLab/source/standalone/benchmarks/benchmark_non_rl.py
++++ b/IsaacLab/source/standalone/benchmarks/benchmark_non_rl.py
+@@ -54,7 +54,7 @@
+ """Rest everything follows."""
+ 
+ # enable benchmarking extension
+-from omni.isaac.core.utils.extensions import enable_extension
++from isaacsim.core.utils.extensions import enable_extension
+ 
+ enable_extension("omni.isaac.benchmark.services")
+ from omni.isaac.benchmark.services import BaseIsaacBenchmark
+--- a/IsaacLab/source/standalone/benchmarks/benchmark_rlgames.py
++++ b/IsaacLab/source/standalone/benchmarks/benchmark_rlgames.py
+@@ -54,7 +54,7 @@
+ """Rest everything follows."""
+ 
+ # enable benchmarking extension
+-from omni.isaac.core.utils.extensions import enable_extension
++from isaacsim.core.utils.extensions import enable_extension
+ 
+ enable_extension("omni.isaac.benchmark.services")
+ from omni.isaac.benchmark.services import BaseIsaacBenchmark
+--- a/IsaacLab/source/standalone/benchmarks/benchmark_rsl_rl.py
++++ b/IsaacLab/source/standalone/benchmarks/benchmark_rsl_rl.py
+@@ -74,7 +74,7 @@
+ 
+ imports_time_end = time.perf_counter_ns()
+ 
+-from omni.isaac.core.utils.extensions import enable_extension
++from isaacsim.core.utils.extensions import enable_extension
+ 
+ enable_extension("omni.isaac.benchmark.services")
+ from omni.isaac.benchmark.services import BaseIsaacBenchmark
+--- a/IsaacLab/source/standalone/demos/arms.py
++++ b/IsaacLab/source/standalone/demos/arms.py
+@@ -35,7 +35,7 @@
+ import numpy as np
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/standalone/demos/hands.py
++++ b/IsaacLab/source/standalone/demos/hands.py
+@@ -35,7 +35,7 @@
+ import numpy as np
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/standalone/demos/quadrupeds.py
++++ b/IsaacLab/source/standalone/demos/quadrupeds.py
+@@ -35,7 +35,7 @@
+ import numpy as np
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/standalone/tools/check_instanceable.py
++++ b/IsaacLab/source/standalone/tools/check_instanceable.py
+@@ -64,10 +64,10 @@
+ """Rest everything follows."""
+ 
+ 
+-import omni.isaac.core.utils.prims as prim_utils
+-from omni.isaac.cloner import GridCloner
+-from omni.isaac.core.simulation_context import SimulationContext
+-from omni.isaac.core.utils.carb import set_carb_setting
++import isaacsim.core.utils.prims as prim_utils
++from isaacsim.core.cloner import GridCloner
++from isaacsim.core.api.simulation_context import SimulationContext
++from isaacsim.core.utils.carb import set_carb_setting
+ 
+ from omni.isaac.lab.utils import Timer
+ from omni.isaac.lab.utils.assets import check_file_path
+--- a/IsaacLab/source/standalone/tools/convert_mesh.py
++++ b/IsaacLab/source/standalone/tools/convert_mesh.py
+@@ -84,7 +84,7 @@
+ import os
+ 
+ import carb
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.kit.app
+ 
+ from omni.isaac.lab.sim.converters import MeshConverter, MeshConverterCfg
+--- a/IsaacLab/source/standalone/tools/convert_mjcf.py
++++ b/IsaacLab/source/standalone/tools/convert_mjcf.py
+@@ -60,7 +60,7 @@
+ import os
+ 
+ import carb
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.kit.app
+ 
+ from omni.isaac.lab.sim.converters import MjcfConverter, MjcfConverterCfg
+--- a/IsaacLab/source/standalone/tools/convert_urdf.py
++++ b/IsaacLab/source/standalone/tools/convert_urdf.py
+@@ -65,7 +65,7 @@
+ import os
+ 
+ import carb
+-import omni.isaac.core.utils.stage as stage_utils
++import isaacsim.core.utils.stage as stage_utils
+ import omni.kit.app
+ 
+ from omni.isaac.lab.sim.converters import UrdfConverter, UrdfConverterCfg
+--- a/IsaacLab/source/standalone/tutorials/00_sim/spawn_prims.py
++++ b/IsaacLab/source/standalone/tutorials/00_sim/spawn_prims.py
+@@ -31,7 +31,7 @@
+ 
+ """Rest everything follows."""
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+--- a/IsaacLab/source/standalone/tutorials/01_assets/run_articulation.py
++++ b/IsaacLab/source/standalone/tutorials/01_assets/run_articulation.py
+@@ -34,7 +34,7 @@
+ 
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import Articulation
+--- a/IsaacLab/source/standalone/tutorials/01_assets/run_deformable_object.py
++++ b/IsaacLab/source/standalone/tutorials/01_assets/run_deformable_object.py
+@@ -35,7 +35,7 @@
+ 
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ import omni.isaac.lab.utils.math as math_utils
+--- a/IsaacLab/source/standalone/tutorials/01_assets/run_rigid_object.py
++++ b/IsaacLab/source/standalone/tutorials/01_assets/run_rigid_object.py
+@@ -35,7 +35,7 @@
+ 
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ import omni.isaac.lab.utils.math as math_utils
+--- a/IsaacLab/source/standalone/tutorials/04_sensors/run_ray_caster.py
++++ b/IsaacLab/source/standalone/tutorials/04_sensors/run_ray_caster.py
+@@ -33,7 +33,7 @@
+ 
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ 
+ import omni.isaac.lab.sim as sim_utils
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg
+--- a/IsaacLab/source/standalone/tutorials/04_sensors/run_ray_caster_camera.py
++++ b/IsaacLab/source/standalone/tutorials/04_sensors/run_ray_caster_camera.py
+@@ -38,7 +38,7 @@
+ import os
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ import omni.replicator.core as rep
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/IsaacLab/source/standalone/tutorials/04_sensors/run_usd_camera.py
++++ b/IsaacLab/source/standalone/tutorials/04_sensors/run_usd_camera.py
+@@ -65,7 +65,7 @@
+ import random
+ import torch
+ 
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ import omni.replicator.core as rep
+ 
+ import omni.isaac.lab.sim as sim_utils
+--- a/server/eval/eval_physics.py
++++ b/server/eval/eval_physics.py
+@@ -39,7 +39,7 @@
+ import omni.timeline
+ from typing import Dict, Any, List, Optional, Union
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrim
++from isaacsim.core.prims import XFormPrim
+ import numpy as np
+ from omni.isaac.core import World
+ # Import Beaver3d and USDLoader
+--- a/server/eval/eval_physics_no_collision_test.py
++++ b/server/eval/eval_physics_no_collision_test.py
+@@ -39,7 +39,7 @@
+ import omni.timeline
+ from typing import Dict, Any, List, Optional, Union
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrim
++from isaacsim.core.prims import XFormPrim
+ import numpy as np
+ from omni.isaac.core import World
+ # Import Beaver3d and USDLoader
+--- a/server/isaaclab/curobo_tools/curobo_planner.py
++++ b/server/isaaclab/curobo_tools/curobo_planner.py
+@@ -25,7 +25,7 @@
+     WorldConfig,
+ )
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_ik_planner import IKPlanner
+ import omni
+ from omni.isaac.lab.assets import RigidObject, Articulation
+--- a/server/isaaclab/curobo_tools_mobile_grasp/curobo_planner.py
++++ b/server/isaaclab/curobo_tools_mobile_grasp/curobo_planner.py
+@@ -25,7 +25,7 @@
+     WorldConfig,
+ )
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_ik_planner import IKPlanner
+ import omni
+ from omni.isaac.lab.assets import RigidObject, Articulation
+--- a/server/isaaclab/data_generation_franka_pnp_from_layout_parsing.py
++++ b/server/isaaclab/data_generation_franka_pnp_from_layout_parsing.py
+@@ -88,7 +88,7 @@
+ ##
+ 
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ def get_grasp_transforms(layout_json_path, target_object_name, base_pos):
+@@ -645,9 +645,9 @@
+     scene_save_dir = os.path.join(SERVER_ROOT_DIR, f"results/{layout_id}")
+     
+     room_id = args_cli.room_id
+-    target_object_name = "room_2adee539_coke_54675f09"
+-    place_object_name = "room_2adee539_alarmclock_847ee577"
+-    table_object_name = "room_2adee539_dresser_fff38e04"
++    target_object_name = os.environ.get("EVOWORLD_TARGET_OBJECT", "room_2adee539_coke_54675f09")
++    place_object_name = os.environ.get("EVOWORLD_PLACE_OBJECT", "room_2adee539_alarmclock_847ee577")
++    table_object_name = os.environ.get("EVOWORLD_TABLE_OBJECT", "room_2adee539_dresser_fff38e04")
+     num_envs = 1
+ 
+ 
+@@ -720,7 +720,7 @@
+     iteration = 0
+ 
+     collected_data_episodes = 0
+-    num_demos = 16
++    num_demos = args_cli.num_demos
+ 
+     T_grasp = 400
+     T_init = 20
+@@ -777,7 +777,7 @@
+ 
+             if iteration % T_grasp == 0:
+ 
+-                if collected_data_episodes >= num_demos:
++                if collected_data_episodes >= num_demos or current_data_idx >= int(os.environ.get("EVOWORLD_MAX_TRIALS", "3")):
+                     break
+ 
+                 # scene initialization
+@@ -1164,6 +1164,32 @@
+             obs_dict, rewards, terminated, truncated, info = env.step(actions)
+             dones = terminated | truncated
+ 
++            # Diagnostic sidecar only: original actions, state machine and collector remain unchanged.
++            if iteration % 5 == 0:
++                def cpu_list(value):
++                    return value.detach().cpu().tolist()
++                diagnostic = {
++                    "attempt": current_data_idx, "iteration": iteration,
++                    "object_state": cpu_list(env.scene[target_object_name].data.root_com_state_w),
++                    "ee_pos_w": cpu_list(env.scene["ee_frame"].data.target_pos_w),
++                    "ee_pos_base": cpu_list(env.scene["ee_frame"].data.target_pos_source),
++                    "joint_pos": cpu_list(robot.data.joint_pos),
++                    "action": cpu_list(actions),
++                }
++                if iteration > T_init:
++                    diagnostic.update({
++                        "initial_z": target_object_initial_z,
++                        "required_lift": expected_success_height,
++                        "grasp_down_goal": cpu_list(ee_goals_grasp_down),
++                        "lift_goal": cpu_list(ee_goals_lift_up),
++                        "reach_up": [bool(x) for x in is_reach_grasp_up_goal_envs],
++                        "reach_down": [bool(x) for x in is_reach_grasp_down_goal_envs],
++                        "lifted": [bool(x) for x in is_reach_lift_up_goal_envs],
++                        "placed": [bool(x) for x in is_reach_place_goal_envs],
++                    })
++                with open("diagnostics.jsonl", "a") as diagnostic_file:
++                    diagnostic_file.write(json.dumps(diagnostic) + "\n")
++
+             for key, value in obs_dict["policy"].items():
+                 if "vis" not in key:
+                     iteration_status[f"next_obs/{key}"] = value
+@@ -1226,6 +1252,7 @@
+ 
+             iteration = (iteration + 1) % T_grasp
+ 
++    print(f"SAGE_ORIGINAL_LOOP_COMPLETE attempts={current_data_idx} demos={collected_data_episodes}")
+     collector_interface.close()
+ 
+     env.close()
+--- a/server/isaaclab/data_generation_franka_pnp_type_aug_with_pose_aug.py
++++ b/server/isaaclab/data_generation_franka_pnp_type_aug_with_pose_aug.py
+@@ -87,7 +87,7 @@
+ ##
+ 
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ 
+--- a/server/isaaclab/data_generation_grasp_aug_pose.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose.py
+@@ -91,7 +91,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+--- a/server/isaaclab/data_generation_grasp_aug_pose_eval.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose_eval.py
+@@ -95,7 +95,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+--- a/server/isaaclab/data_generation_grasp_aug_pose_v1.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose_v1.py
+@@ -92,7 +92,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+--- a/server/isaaclab/data_generation_grasp_aug_pose_v1_parallel.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose_v1_parallel.py
+@@ -92,11 +92,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ 
+--- a/server/isaaclab/data_generation_grasp_aug_pose_v2_eval.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose_v2_eval.py
+@@ -95,7 +95,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+--- a/server/isaaclab/data_generation_grasp_aug_pose_v2_eval_aug_type.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose_v2_eval_aug_type.py
+@@ -120,7 +120,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+--- a/server/isaaclab/data_generation_grasp_aug_pose_v2_on_aug_type_parallel.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose_v2_on_aug_type_parallel.py
+@@ -90,7 +90,7 @@
+ ##
+ 
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ 
+--- a/server/isaaclab/data_generation_grasp_aug_pose_v2_on_aug_type_parallel_vis.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose_v2_on_aug_type_parallel_vis.py
+@@ -90,7 +90,7 @@
+ ##
+ 
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ 
+--- a/server/isaaclab/data_generation_grasp_aug_pose_v2_parallel.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose_v2_parallel.py
+@@ -81,7 +81,7 @@
+ ##
+ 
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ 
+--- a/server/isaaclab/data_generation_grasp_aug_pose_v2_parallel_vis.py
++++ b/server/isaaclab/data_generation_grasp_aug_pose_v2_parallel_vis.py
+@@ -91,7 +91,7 @@
+ ##
+ 
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ 
+--- a/server/isaaclab/data_generation_grasp_v0.py
++++ b/server/isaaclab/data_generation_grasp_v0.py
+@@ -76,7 +76,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ 
+--- a/server/isaaclab/data_generation_grasp_v1.py
++++ b/server/isaaclab/data_generation_grasp_v1.py
+@@ -79,7 +79,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ 
+--- a/server/isaaclab/data_generation_grasp_v2.py
++++ b/server/isaaclab/data_generation_grasp_v2.py
+@@ -78,7 +78,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ 
+--- a/server/isaaclab/data_generation_grasp_v2_eval.py
++++ b/server/isaaclab/data_generation_grasp_v2_eval.py
+@@ -74,7 +74,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ 
+--- a/server/isaaclab/data_generation_grasp_v3.py
++++ b/server/isaaclab/data_generation_grasp_v3.py
+@@ -78,7 +78,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ 
+--- a/server/isaaclab/data_generation_grasp_v3_eval.py
++++ b/server/isaaclab/data_generation_grasp_v3_eval.py
+@@ -74,7 +74,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ 
+--- a/server/isaaclab/data_generation_grasp_v4.py
++++ b/server/isaaclab/data_generation_grasp_v4.py
+@@ -83,7 +83,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+--- a/server/isaaclab/data_generation_grasp_v5.py
++++ b/server/isaaclab/data_generation_grasp_v5.py
+@@ -82,7 +82,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+--- a/server/isaaclab/data_generation_grasp_v6.py
++++ b/server/isaaclab/data_generation_grasp_v6.py
+@@ -82,7 +82,7 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+--- a/server/isaaclab/data_generation_mobile_franka_mobile_manipulation_with_pose_aug.py
++++ b/server/isaaclab/data_generation_mobile_franka_mobile_manipulation_with_pose_aug.py
+@@ -128,11 +128,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_from_layout_parsing.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_from_layout_parsing.py
+@@ -127,11 +127,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_from_layout_parsing_pose_aug.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_from_layout_parsing_pose_aug.py
+@@ -128,11 +128,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v0.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v0.py
+@@ -92,11 +92,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ 
+--- a/server/isaaclab/data_generation_mobile_manipulation_v1_deprecated.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v1_deprecated.py
+@@ -96,11 +96,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ 
+--- a/server/isaaclab/data_generation_mobile_manipulation_v2.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v2.py
+@@ -96,11 +96,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ 
+--- a/server/isaaclab/data_generation_mobile_manipulation_v3.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v3.py
+@@ -97,11 +97,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v4.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v4.py
+@@ -122,11 +122,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v4_eval.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v4_eval.py
+@@ -124,11 +124,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v4_eval_sample.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v4_eval_sample.py
+@@ -122,11 +122,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v4_eval_sample_pose_aug.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v4_eval_sample_pose_aug.py
+@@ -123,11 +123,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v4_eval_sample_pose_aug_from_parse.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v4_eval_sample_pose_aug_from_parse.py
+@@ -124,11 +124,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v5.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v5.py
+@@ -122,11 +122,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v5_eval.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v5_eval.py
+@@ -124,11 +124,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v5_pose_aug.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v5_pose_aug.py
+@@ -123,11 +123,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v6.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v6.py
+@@ -122,11 +122,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v6_eval.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v6_eval.py
+@@ -124,11 +124,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7.py
+@@ -122,11 +122,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7_eval.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7_eval.py
+@@ -124,11 +124,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7_eval_multi_step.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7_eval_multi_step.py
+@@ -124,11 +124,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug.py
+@@ -124,11 +124,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug_from_parse.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug_from_parse.py
+@@ -126,11 +126,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug_multi_step.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug_multi_step.py
+@@ -124,11 +124,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug_multi_step_from_parse.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug_multi_step_from_parse.py
+@@ -126,11 +126,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7_pose_aug.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7_pose_aug.py
+@@ -123,11 +123,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7_pose_aug_and_scene_aug.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7_pose_aug_and_scene_aug.py
+@@ -125,11 +125,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/data_generation_mobile_manipulation_v7_pose_aug_and_scene_aug_motion_plan_eval.py
++++ b/server/isaaclab/data_generation_mobile_manipulation_v7_pose_aug_and_scene_aug_motion_plan_eval.py
+@@ -125,11 +125,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/exp_figs_mm_aug_vis.py
++++ b/server/isaaclab/exp_figs_mm_aug_vis.py
+@@ -128,11 +128,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/exp_figs_mm_original_vis.py
++++ b/server/isaaclab/exp_figs_mm_original_vis.py
+@@ -122,11 +122,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/exp_figs_mm_teaser_vis.py
++++ b/server/isaaclab/exp_figs_mm_teaser_vis.py
+@@ -122,11 +122,11 @@
+ from omni.isaac.lab.assets.articulation import ArticulationCfg
+ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrimView
++from isaacsim.core.prims import XFormPrim as XFormPrimView
+ from omni.isaac.lab.assets import RigidObject, RigidObjectCfg, RigidObjectCollectionCfg
+ from omni.isaac.lab.sensors import ContactSensorCfg
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools_mobile_grasp.curobo_planner import MotionPlanner
+ 
+ from isaaclab.omron_franka_occupancy import occupancy_map, support_point, get_forward_side_from_support_point_and_yaw
+--- a/server/isaaclab/exps_fig_articulation.py
++++ b/server/isaaclab/exps_fig_articulation.py
+@@ -88,7 +88,7 @@
+ ##
+ 
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ def get_grasp_transforms(layout_json_path, target_object_name, base_pos):
+--- a/server/isaaclab/exps_fig_articulation_close.py
++++ b/server/isaaclab/exps_fig_articulation_close.py
+@@ -88,7 +88,7 @@
+ ##
+ 
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ def get_grasp_transforms(layout_json_path, target_object_name, base_pos):
+--- a/server/isaaclab/exps_fig_teaser.py
++++ b/server/isaaclab/exps_fig_teaser.py
+@@ -88,7 +88,7 @@
+ ##
+ 
+ import omni.isaac.lab.utils.math as math_utils
+-import omni.isaac.core.utils.prims as prim_utils
++import isaacsim.core.utils.prims as prim_utils
+ from isaaclab.curobo_tools.curobo_planner import MotionPlanner
+ 
+ def get_grasp_transforms(layout_json_path, target_object_name, base_pos):
+--- a/server/isaacsim/isaac.sim.mcp_extension/examples/franka.py
++++ b/server/isaacsim/isaac.sim.mcp_extension/examples/franka.py
+@@ -39,11 +39,11 @@
+ import asyncio
+ from time import sleep
+ from omni.isaac.core import SimulationContext
+-from omni.isaac.core.utils.prims import create_prim
+-from omni.isaac.core.utils.stage import add_reference_to_stage, is_stage_loading
++from isaacsim.core.utils.prims import create_prim
++from isaacsim.core.utils.stage import add_reference_to_stage, is_stage_loading
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrim
+-from omni.isaac.core.articulations import Articulation
++from isaacsim.core.prims import XFormPrim
++from isaacsim.core.prims import SingleArticulation as Articulation
+ import numpy as np
+ from omni.isaac.core import World
+ 
+--- a/server/isaacsim/isaac.sim.mcp_extension/examples/franka_grid.py
++++ b/server/isaacsim/isaac.sim.mcp_extension/examples/franka_grid.py
+@@ -39,9 +39,9 @@
+ import asyncio
+ import numpy as np
+ from omni.isaac.core import World, SimulationContext
+-from omni.isaac.core.utils.stage import add_reference_to_stage
+-from omni.isaac.core.prims import XFormPrim
+-from omni.isaac.core.articulations import Articulation
++from isaacsim.core.utils.stage import add_reference_to_stage
++from isaacsim.core.prims import XFormPrim
++from isaacsim.core.prims import SingleArticulation as Articulation
+ from omni.isaac.nucleus import get_assets_root_path
+ 
+ # Get the path to the Franka robot asset
+--- a/server/isaacsim/isaac.sim.mcp_extension/examples/g1.py
++++ b/server/isaacsim/isaac.sim.mcp_extension/examples/g1.py
+@@ -42,14 +42,14 @@
+ import omni
+ from omni.isaac.core import World
+ from omni.isaac.core.robots import Robot
+-from omni.isaac.core.utils.types import ArticulationAction
+-from omni.isaac.core.utils.stage import add_reference_to_stage
+-from omni.isaac.core.objects import DynamicCuboid
++from isaacsim.core.utils.types import ArticulationAction
++from isaacsim.core.utils.stage import add_reference_to_stage
++from isaacsim.core.api.objects import DynamicCuboid
+ from omni.isaac.nucleus import get_assets_root_path
+ import numpy as np
+ from omni.isaac.core import SimulationContext
+ from omni.isaac.core import PhysicsContext
+-from omni.isaac.core.prims import XFormPrim
++from isaacsim.core.prims import XFormPrim
+ 
+ class G1Simulation:
+     """Simulation of G1 robot in a factory environment using the BaseSample pattern."""
+--- a/server/isaacsim/isaac.sim.mcp_extension/examples/go1.py
++++ b/server/isaacsim/isaac.sim.mcp_extension/examples/go1.py
+@@ -42,9 +42,9 @@
+ import omni
+ from omni.isaac.core import World
+ from omni.isaac.core.robots import Robot
+-from omni.isaac.core.utils.types import ArticulationAction
+-from omni.isaac.core.utils.stage import add_reference_to_stage
+-from omni.isaac.core.objects import DynamicCuboid
++from isaacsim.core.utils.types import ArticulationAction
++from isaacsim.core.utils.stage import add_reference_to_stage
++from isaacsim.core.api.objects import DynamicCuboid
+ from omni.isaac.nucleus import get_assets_root_path
+ import numpy as np
+ from omni.isaac.core import SimulationContext
+--- a/server/isaacsim/isaac.sim.mcp_extension/isaac_sim_mcp_extension/extension.py
++++ b/server/isaacsim/isaac.sim.mcp_extension/isaac_sim_mcp_extension/extension.py
+@@ -59,7 +59,7 @@
+ import omni.timeline
+ from typing import Dict, Any, List, Optional, Union
+ from omni.isaac.nucleus import get_assets_root_path
+-from omni.isaac.core.prims import XFormPrim
++from isaacsim.core.prims import XFormPrim
+ import numpy as np
+ from omni.isaac.core import World
+ # Import Beaver3d and USDLoader
+@@ -120,7 +120,7 @@
+     return mapped_port
+ 
+ try:
+-    import omni.isaac.core.utils.prims as prim_utils
++    import isaacsim.core.utils.prims as prim_utils
+ except ModuleNotFoundError:
+     import isaacsim.core.utils.prims as prim_utils
+ 
+@@ -479,8 +479,8 @@
+         return {"status": "success", "message": "command executed"}
+     
+     def create_robot(self, robot_type: str = "g1", position: List[float] = [0, 0, 0]):
+-        from omni.isaac.core.utils.prims import create_prim
+-        from omni.isaac.core.utils.stage import add_reference_to_stage, is_stage_loading
++        from isaacsim.core.utils.prims import create_prim
++        from isaacsim.core.utils.stage import add_reference_to_stage, is_stage_loading
+         from omni.isaac.nucleus import get_assets_root_path
+         import os
+ 
+--- a/server/isaacsim/isaac.sim.mcp_extension/isaac_sim_mcp_extension/usd.py
++++ b/server/isaacsim/isaac.sim.mcp_extension/isaac_sim_mcp_extension/usd.py
+@@ -42,7 +42,7 @@
+ import omni
+ from pathlib import Path
+ from pxr import UsdShade, Sdf, UsdGeom, Gf
+-from omni.isaac.core.utils.stage import add_reference_to_stage
++from isaacsim.core.utils.stage import add_reference_to_stage
+ import json
+ import requests
+ 
+--- a/server/isaacsim/isaac_mcp/server.py
++++ b/server/isaacsim/isaac_mcp/server.py
+@@ -436,8 +436,8 @@
+     For physics simulation, avoid using simulation_context to run simulations in the main thread as this can cause blocking. Instead, use the World class with async methods for initializing physics and running simulations. For example, use my_world = World(physics_dt=1.0/60.0) and my_world.step_async() in a loop, which allows for better performance and responsiveness. If you need to wait for physics to stabilize, consider using my_world.play() followed by multiple step_async() calls.
+     To create an simulation of Franka robot, the code should be like this:
+ from omni.isaac.core import SimulationContext
+-from omni.isaac.core.utils.prims import create_prim
+-from omni.isaac.core.utils.stage import add_reference_to_stage, is_stage_loading
++from isaacsim.core.utils.prims import create_prim
++from isaacsim.core.utils.stage import add_reference_to_stage, is_stage_loading
+ from omni.isaac.nucleus import get_assets_root_path
+ 
+ assets_root_path = get_assets_root_path()
+@@ -452,8 +452,8 @@
+     To control the Franka robot, the code should be like this:
+ 
+ from omni.isaac.core import SimulationContext
+-from omni.isaac.core.articulations import Articulation
+-from omni.isaac.core.utils.stage import add_reference_to_stage
++from isaacsim.core.prims import SingleArticulation as Articulation
++from isaacsim.core.utils.stage import add_reference_to_stage
+ from omni.isaac.nucleus import get_assets_root_path
+ 
+ my_world = World(stage_units_in_meters=1.0)
+@@ -656,8 +656,8 @@
+ 
+ #     3. For Franka robot simulation, the code should be like this:
+ # from omni.isaac.core import SimulationContext
+-# from omni.isaac.core.utils.prims import create_prim
+-# from omni.isaac.core.utils.stage import add_reference_to_stage, is_stage_loading
++# from isaacsim.core.utils.prims import create_prim
++# from isaacsim.core.utils.stage import add_reference_to_stage, is_stage_loading
+ # from omni.isaac.nucleus import get_assets_root_path
+ 
+ # assets_root_path = get_assets_root_path()
+@@ -679,8 +679,8 @@
+ #     4. For Franka robot control, the code should be like this:
+     
+ # from omni.isaac.core import SimulationContext
+-# from omni.isaac.core.utils.prims import create_prim
+-# from omni.isaac.core.utils.stage import add_reference_to_stage, is_stage_loading
++# from isaacsim.core.utils.prims import create_prim
++# from isaacsim.core.utils.stage import add_reference_to_stage, is_stage_loading
+ # from omni.isaac.nucleus import get_assets_root_path
+ # from pxr import UsdPhysics
+ 
+@@ -734,7 +734,7 @@
+ # import numpy as np
+ # from omni.isaac.core import World
+ # from omni.isaac.core import SimulationContext
+-# from omni.isaac.core.utils.prims import create_prim
++# from isaacsim.core.utils.prims import create_prim
+ # from omni.isaac.nucleus import get_assets_root_path
+ # from omni.isaac.wheeled_robots.controllers.differential_controller import DifferentialController
+ # from omni.isaac.wheeled_robots.robots import WheeledRobot
+--- a/server/m2t2_utils/infer.py
++++ b/server/m2t2_utils/infer.py
+@@ -46,7 +46,7 @@
+     cfg.eval.num_runs = 5
+ 
+     model = M2T2.from_config(cfg.m2t2)
+-    ckpt = torch.load(cfg.eval.checkpoint)
++    ckpt = torch.load(cfg.eval.checkpoint, weights_only=False)
+     model.load_state_dict(ckpt['model'])
+     model = model.cuda().eval()
+ 
+--- a/server/utils.py
++++ b/server/utils.py
+@@ -15,9 +15,6 @@
+ from typing import List
+ from models import Point3D, Dimensions, Wall
+ from typing import Dict, Any, Optional
+-from key import ANTHROPIC_API_KEY
+-from vlm import call_vlm
+-import anthropic
+ import json
+ from validation import check_room_overlap
+ from models import FloorPlan, Room, Door, Window, Wall, Object, Euler
+@@ -1166,6 +1163,7 @@
+ Respond with ONLY the JSON array, no other text."""
+ 
+     try:
++        from vlm import call_vlm
+         response = call_vlm(
+             vlm_type="qwen",
+             model="claude-sonnet-4-20250514",
+--- a/curobo/src/curobo/geom/sdf/world_mesh.py
++++ b/curobo/src/curobo/geom/sdf/world_mesh.py
+@@ -64,7 +64,7 @@
+         self._env_n_mesh = None
+         self._mesh_tensor_list = None
+         self._env_mesh_names = None
+-        self._wp_device = wp.torch.device_from_torch(self.tensor_args.device)
++        self._wp_device = wp.device_from_torch(self.tensor_args.device)
+         self._wp_mesh_cache = {}  # stores warp meshes across environments
+ 
+         super().__init__(config)

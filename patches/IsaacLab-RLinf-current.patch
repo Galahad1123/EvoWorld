@@ -1,0 +1,203 @@
+diff --git a/source/isaaclab/isaaclab/assets/articulation/articulation.py b/source/isaaclab/isaaclab/assets/articulation/articulation.py
+index a45a5e30..bf8b1c67 100644
+--- a/source/isaaclab/isaaclab/assets/articulation/articulation.py
++++ b/source/isaaclab/isaaclab/assets/articulation/articulation.py
+@@ -14,7 +14,7 @@ from collections.abc import Sequence
+ from prettytable import PrettyTable
+ from typing import TYPE_CHECKING
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ from isaacsim.core.simulation_manager import SimulationManager
+ from isaacsim.core.version import get_version
+ from pxr import PhysxSchema, UsdPhysics
+diff --git a/source/isaaclab/isaaclab/assets/articulation/articulation_data.py b/source/isaaclab/isaaclab/assets/articulation/articulation_data.py
+index 172a002a..fb454103 100644
+--- a/source/isaaclab/isaaclab/assets/articulation/articulation_data.py
++++ b/source/isaaclab/isaaclab/assets/articulation/articulation_data.py
+@@ -7,7 +7,7 @@ import logging
+ import torch
+ import weakref
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ from isaacsim.core.simulation_manager import SimulationManager
+ 
+ import isaaclab.utils.math as math_utils
+diff --git a/source/isaaclab/isaaclab/assets/deformable_object/deformable_object.py b/source/isaaclab/isaaclab/assets/deformable_object/deformable_object.py
+index a98a8f42..94bc27f0 100644
+--- a/source/isaaclab/isaaclab/assets/deformable_object/deformable_object.py
++++ b/source/isaaclab/isaaclab/assets/deformable_object/deformable_object.py
+@@ -10,7 +10,7 @@ import torch
+ from collections.abc import Sequence
+ from typing import TYPE_CHECKING
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ from isaacsim.core.simulation_manager import SimulationManager
+ from pxr import PhysxSchema, UsdShade
+ 
+diff --git a/source/isaaclab/isaaclab/assets/deformable_object/deformable_object_data.py b/source/isaaclab/isaaclab/assets/deformable_object/deformable_object_data.py
+index 5309c35d..f37c7538 100644
+--- a/source/isaaclab/isaaclab/assets/deformable_object/deformable_object_data.py
++++ b/source/isaaclab/isaaclab/assets/deformable_object/deformable_object_data.py
+@@ -1,3 +1,4 @@
++from __future__ import annotations
+ # Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
+ # All rights reserved.
+ #
+@@ -6,7 +7,7 @@
+ import torch
+ import weakref
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ 
+ import isaaclab.utils.math as math_utils
+ from isaaclab.utils.buffers import TimestampedBuffer
+diff --git a/source/isaaclab/isaaclab/assets/rigid_object/rigid_object.py b/source/isaaclab/isaaclab/assets/rigid_object/rigid_object.py
+index ee13c56e..09be68c6 100644
+--- a/source/isaaclab/isaaclab/assets/rigid_object/rigid_object.py
++++ b/source/isaaclab/isaaclab/assets/rigid_object/rigid_object.py
+@@ -10,7 +10,7 @@ import torch
+ from collections.abc import Sequence
+ from typing import TYPE_CHECKING
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ from isaacsim.core.simulation_manager import SimulationManager
+ from pxr import UsdPhysics
+ 
+diff --git a/source/isaaclab/isaaclab/assets/rigid_object/rigid_object_data.py b/source/isaaclab/isaaclab/assets/rigid_object/rigid_object_data.py
+index b809fd89..0beb4528 100644
+--- a/source/isaaclab/isaaclab/assets/rigid_object/rigid_object_data.py
++++ b/source/isaaclab/isaaclab/assets/rigid_object/rigid_object_data.py
+@@ -6,7 +6,7 @@
+ import torch
+ import weakref
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ 
+ import isaaclab.utils.math as math_utils
+ from isaaclab.sim.utils.stage import get_current_stage_id
+diff --git a/source/isaaclab/isaaclab/assets/rigid_object_collection/rigid_object_collection.py b/source/isaaclab/isaaclab/assets/rigid_object_collection/rigid_object_collection.py
+index ff223d7c..6f94fc1b 100644
+--- a/source/isaaclab/isaaclab/assets/rigid_object_collection/rigid_object_collection.py
++++ b/source/isaaclab/isaaclab/assets/rigid_object_collection/rigid_object_collection.py
+@@ -11,7 +11,7 @@ import torch
+ from collections.abc import Sequence
+ from typing import TYPE_CHECKING
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ from isaacsim.core.simulation_manager import SimulationManager
+ from pxr import UsdPhysics
+ 
+diff --git a/source/isaaclab/isaaclab/assets/rigid_object_collection/rigid_object_collection_data.py b/source/isaaclab/isaaclab/assets/rigid_object_collection/rigid_object_collection_data.py
+index 415d1617..bcb23098 100644
+--- a/source/isaaclab/isaaclab/assets/rigid_object_collection/rigid_object_collection_data.py
++++ b/source/isaaclab/isaaclab/assets/rigid_object_collection/rigid_object_collection_data.py
+@@ -6,7 +6,7 @@
+ import torch
+ import weakref
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ 
+ import isaaclab.utils.math as math_utils
+ from isaaclab.sim.utils.stage import get_current_stage_id
+diff --git a/source/isaaclab/isaaclab/envs/mdp/events.py b/source/isaaclab/isaaclab/envs/mdp/events.py
+index 7ea6d7b2..f965c195 100644
+--- a/source/isaaclab/isaaclab/envs/mdp/events.py
++++ b/source/isaaclab/isaaclab/envs/mdp/events.py
+@@ -20,7 +20,7 @@ import torch
+ from typing import TYPE_CHECKING, Literal
+ 
+ import carb
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ from isaacsim.core.utils.extensions import enable_extension
+ from pxr import Gf, Sdf, UsdGeom, Vt
+ 
+diff --git a/source/isaaclab/isaaclab/sensors/contact_sensor/contact_sensor.py b/source/isaaclab/isaaclab/sensors/contact_sensor/contact_sensor.py
+index aed50d39..0ab8f414 100644
+--- a/source/isaaclab/isaaclab/sensors/contact_sensor/contact_sensor.py
++++ b/source/isaaclab/isaaclab/sensors/contact_sensor/contact_sensor.py
+@@ -13,7 +13,7 @@ from collections.abc import Sequence
+ from typing import TYPE_CHECKING
+ 
+ import carb
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ from isaacsim.core.simulation_manager import SimulationManager
+ from pxr import PhysxSchema
+ 
+diff --git a/source/isaaclab/isaaclab/sensors/ray_caster/ray_caster.py b/source/isaaclab/isaaclab/sensors/ray_caster/ray_caster.py
+index 723d669d..39f2ad37 100644
+--- a/source/isaaclab/isaaclab/sensors/ray_caster/ray_caster.py
++++ b/source/isaaclab/isaaclab/sensors/ray_caster/ray_caster.py
+@@ -13,7 +13,7 @@ from collections.abc import Sequence
+ from typing import TYPE_CHECKING
+ 
+ import omni
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ import warp as wp
+ from isaacsim.core.prims import XFormPrim
+ from isaacsim.core.simulation_manager import SimulationManager
+diff --git a/source/isaaclab/isaaclab/sensors/ray_caster/ray_caster_camera.py b/source/isaaclab/isaaclab/sensors/ray_caster/ray_caster_camera.py
+index 49e7fd54..8dc1ef6a 100644
+--- a/source/isaaclab/isaaclab/sensors/ray_caster/ray_caster_camera.py
++++ b/source/isaaclab/isaaclab/sensors/ray_caster/ray_caster_camera.py
+@@ -9,7 +9,7 @@ import torch
+ from collections.abc import Sequence
+ from typing import TYPE_CHECKING, ClassVar, Literal
+ 
+-import omni.physics.tensors.impl.api as physx
++import omni.physics.tensors.api as physx
+ from isaacsim.core.prims import XFormPrim
+ 
+ import isaaclab.utils.math as math_utils
+diff --git a/source/isaaclab/isaaclab/sim/simulation_context.py b/source/isaaclab/isaaclab/sim/simulation_context.py
+index 07ee0681..52c9240b 100644
+--- a/source/isaaclab/isaaclab/sim/simulation_context.py
++++ b/source/isaaclab/isaaclab/sim/simulation_context.py
+@@ -214,7 +214,9 @@ class SimulationContext(_SimulationContext):
+             # disable the viewport if offscreen_render is enabled
+             from omni.kit.viewport.utility import get_active_viewport
+ 
+-            get_active_viewport().updates_enabled = False
++            viewport = get_active_viewport()
++            if viewport is not None:
++                viewport.updates_enabled = False
+ 
+         # override enable scene querying if rendering is enabled
+         # this is needed for some GUI features
+diff --git a/source/isaaclab/isaaclab/sim/utils/utils.py b/source/isaaclab/isaaclab/sim/utils/utils.py
+index 7bef3ff9..d710100a 100644
+--- a/source/isaaclab/isaaclab/sim/utils/utils.py
++++ b/source/isaaclab/isaaclab/sim/utils/utils.py
+@@ -421,7 +421,8 @@ def bind_physics_material(
+     # check if prim has collision applied on it
+     has_physics_scene_api = prim.HasAPI(PhysxSchema.PhysxSceneAPI)
+     has_collider = prim.HasAPI(UsdPhysics.CollisionAPI)
+-    has_deformable_body = prim.HasAPI(PhysxSchema.PhysxDeformableBodyAPI)
++    has_deformable_body = (hasattr(PhysxSchema, "PhysxDeformableBodyAPI")
++                           and prim.HasAPI(PhysxSchema.PhysxDeformableBodyAPI))
+     has_particle_system = prim.IsA(PhysxSchema.PhysxParticleSystem)
+     if not (has_physics_scene_api or has_collider or has_deformable_body or has_particle_system):
+         logger.debug(
+diff --git a/source/isaaclab/isaaclab/utils/assets.py b/source/isaaclab/isaaclab/utils/assets.py
+index 353767c0..1410e0bf 100644
+--- a/source/isaaclab/isaaclab/utils/assets.py
++++ b/source/isaaclab/isaaclab/utils/assets.py
+@@ -27,7 +27,7 @@ import omni.client
+ # import logger
+ logger = logging.getLogger(__name__)
+ 
+-NUCLEUS_ASSET_ROOT_DIR = carb.settings.get_settings().get("/persistent/isaac/asset_root/cloud")
++NUCLEUS_ASSET_ROOT_DIR = (carb.settings.get_settings().get("/persistent/isaac/asset_root/cloud") or "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1")
+ """Path to the root directory on the Nucleus Server."""
+ 
+ NVIDIA_NUCLEUS_DIR = f"{NUCLEUS_ASSET_ROOT_DIR}/NVIDIA"

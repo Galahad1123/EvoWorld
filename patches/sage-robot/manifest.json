@@ -1,0 +1,911 @@
+{
+  "sage": {
+    "commit": "fe3966013a495dc1642710de93a83ddf66e534a0",
+    "upstream_tracked_clean": true,
+    "changed_files": [
+      {
+        "path": "IsaacLab/docs/conf.py",
+        "upstream_sha256": "9819dc92945c6a3896943198d5d348d93a89958e04a5d866948d133135927dc5",
+        "adapted_sha256": "e3c976193a36abdb86718f6ed9011bf21ff27f5a8b181836808b6f72ec36f087"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/app/app_launcher.py",
+        "upstream_sha256": "915ad891e1cfb1d1f6a76aca5d80124d7b7002da76ccd04553c4c286c6a14c63",
+        "adapted_sha256": "3ed212ecd115fec25e9fd7c1c0af367e5b258b666d1ea02a8be4bb8a00452dfa"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/articulation/articulation.py",
+        "upstream_sha256": "f8a7ea5ef9847dc0919ca1bc9b6fd7d1a330c97e47b73dba38355a8d0e62f57b",
+        "adapted_sha256": "48cc84aa5cc30d9447b497d53e83d155963af27bfaa0f0120a9f4e56a3f8eff0"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/articulation/articulation_data.py",
+        "upstream_sha256": "1f7aedefb8a5923fb6aaa9c2dffccbed4847688dd931401608a1a406a8a84eb0",
+        "adapted_sha256": "76d8f2285d48fcc39ae2404a7781a56480548bae18073fa857e39b5e704ea68d"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/deformable_object/deformable_object.py",
+        "upstream_sha256": "a91e006e739069e8199a609b635fe49a1b9093e21196cbf38a6278e3ecc17d66",
+        "adapted_sha256": "9cdda04b2a31e5d6cab2cc19c4b54646ec8b4f2ded3f664241600100744cfc28"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/deformable_object/deformable_object_data.py",
+        "upstream_sha256": "fc4f20f27a51b8fd52d85dbf15666cbb6d1563931eef0f7e805610eb3d8e9a09",
+        "adapted_sha256": "f54e19c77de716efbab0c10ebc2a815740cc5355ed8771f7ff42be45e08e411e"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object/rigid_object.py",
+        "upstream_sha256": "d263d35c1feeb008c3563225fe42951c0b304e35509fa0115ec33907264e91df",
+        "adapted_sha256": "17bf0d343e5338982aa902333780b9250ccf0a9ca084a60631131df1fc423444"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object/rigid_object_data.py",
+        "upstream_sha256": "8396f9276e5cad6ee161bd65bc29b2aafa5212d75a697a7120019fbb48aa0d35",
+        "adapted_sha256": "fdda9c6d4771ddfe488bf8efc160d6864ab00921db2890d19ce294ea377d0276"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object_collection/rigid_object_collection.py",
+        "upstream_sha256": "d62220328eaf8346f7404d89083f19843109f50dc1995f41094af3f49354506b",
+        "adapted_sha256": "ab651051e1d16bdc7da98925a49a3a2b92f5526d919985875b41d1c9b0aa7a2a"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/assets/rigid_object_collection/rigid_object_collection_data.py",
+        "upstream_sha256": "d62b4948c5ad5028112003698cffb48eeb7c4a62454ce2d0039799a0c4bf263f",
+        "adapted_sha256": "32978a4830efa4e910f5b0c75ba214f854f337139ef96a5c2d930e36b5687ae6"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/controllers/config/rmp_flow.py",
+        "upstream_sha256": "91b0207e32e5f48c10b0d3dcffd7ef73ee3ee15b792ecfd0078ca67382a97286",
+        "adapted_sha256": "2faa6287bc508a7175d814e6d78cb6cbb99591a5be27d70ddf5a65501e4b0c0d"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/controllers/rmp_flow.py",
+        "upstream_sha256": "c5604b7f63b373921f4fa3c45321232c88edc2f224e79972cd68e3746af0bb7d",
+        "adapted_sha256": "a7552f295729b8036b2c02b72358a4a1a6f15aada1ba330a654f992eafd2aba8"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/direct_marl_env.py",
+        "upstream_sha256": "f7be8a172e432e8488dfe1b8505ee51b6958ad98d269e3c947f13a3dbfc2ab02",
+        "adapted_sha256": "02e8050e5b2bbe993f12ac364114f31e77805c22e6b6f99f0d9e061ef3841be5"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/direct_rl_env.py",
+        "upstream_sha256": "edbd3850f2c81ff82b3b651799a15b36483d142cb2a227ee7a90af3a63668b0b",
+        "adapted_sha256": "102aa03c5d1031698857a9a67deba62de5936320387feced96be3c6f4a14cabf"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/manager_based_env.py",
+        "upstream_sha256": "9d8d00504b9d803aa67c3da1258ffd275729f95d5c107449971ba0f4198a5b68",
+        "adapted_sha256": "f1c07e43f503b106dbe2ea04c7f64af4f6e2af4daa51c10595412a53cf51e4d5"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/manager_based_rl_env.py",
+        "upstream_sha256": "2a0afe4dc402b31bba624b9509a143996017922160bea80a17117246060fea39",
+        "adapted_sha256": "9d2cb2fecafe44440460bc4a1100e20e7ab7d8ae7ff8c7108a4a090920475117"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/envs/mdp/events.py",
+        "upstream_sha256": "c97670fb9509fb2c8f4cacd83f3ca88a94b1a5138e8239df74005f02cc79df8e",
+        "adapted_sha256": "a6d5f9d6a98400c4eef9d97277aba47d8a2d21eb46338fa2e16452649a1b9c30"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/markers/visualization_markers.py",
+        "upstream_sha256": "55ecebaccbf4a1d37526935445f53e1937aeb0ee87b5391faffa504463c5f19b",
+        "adapted_sha256": "1b4ce4ac043607ce1efc563250349a5bb816e160f50f07a72b58e0f7b783e976"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/scene/interactive_scene.py",
+        "upstream_sha256": "7818f51049c83592597a11b7bea495d268f8cc5cac173d26b3c1b77e02332337",
+        "adapted_sha256": "9fa6c461ea8cde5b81fb2102b2758387880efd15dd130802fffad662d39232c7"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/camera/camera.py",
+        "upstream_sha256": "8eea473124e5372b5cfdfc5a984d6710fc859e46002ac8b0dc736685cc8faf88",
+        "adapted_sha256": "e5f118aed4af6b1af837fb4d8c6c2af11777433d3323f294fe04c4f32d11ec1a"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/camera/tiled_camera.py",
+        "upstream_sha256": "e3e833226bf85c194cef781ff377aa8307801df32fa8c4a53b2d6bc1f3db84cd",
+        "adapted_sha256": "28d5cdb8e7df05347f8e68a430d84663db58f6247d9504bcbbfd2dc4e975f2a1"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/contact_sensor/contact_sensor.py",
+        "upstream_sha256": "bc73defe7a7c7638344981d815d576ca240a717875a2d410258a55b65398e2cd",
+        "adapted_sha256": "42d306d03f204e5d7bc26ee233a34c9ebb4ac1f8c270f6a143a2eb7ae8630e3e"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/frame_transformer/frame_transformer.py",
+        "upstream_sha256": "9da975ebd124a8778622f2fde728071992fa98f7e5a42aa274e252b4184abe6e",
+        "adapted_sha256": "6a3e5ce066267e65728acd416673631bf2a23ffaae00817093cc44dd43db6757"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/imu/imu.py",
+        "upstream_sha256": "47c4b92d5fa04d7ff5272ccd6532ef2f04a9c2292f3c49e2ea5a93a407ab56da",
+        "adapted_sha256": "a06ca083a7e977733e33ed70f4dd975faaaadc7d35972c978fe4c3d15b547365"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/ray_caster/ray_caster.py",
+        "upstream_sha256": "1ac70b776a2a339fe60c08feb62f8e0cca0da6c7fbcdd001cd6e3ba265d78e93",
+        "adapted_sha256": "adc1310b800d46ae11b80a8c60ecd2550090f147cb644f1d8b850417384f67fd"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sensors/ray_caster/ray_caster_camera.py",
+        "upstream_sha256": "6de5294c8780da701e86aebb5ff82bf8121d72babcab6b9a80828d727c744aec",
+        "adapted_sha256": "b75eb25e022949356ca4703aa7529d742523292c90516961eac25f14964fa4f0"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/converters/mesh_converter.py",
+        "upstream_sha256": "200cd03ce54512e4232ea6b4b646371cd44357379a12714451233bbaefafe02d",
+        "adapted_sha256": "7e01b67cc847eb9faf78d0078d6feebd7c5ad1885335e1b698fed9984af9d03d"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/converters/mjcf_converter.py",
+        "upstream_sha256": "f128719eb3ef35acfdca129595cf24d856e10edc936e31adbd7265ceefa953ad",
+        "adapted_sha256": "da4fe6fcc9169ca32e896a21cc83f611c14fee7736a2a4df27897d5093b7f768"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/converters/urdf_converter.py",
+        "upstream_sha256": "9c01de9392f688accdebf23dd8f24630d7e2f50e505dc8e778fb49d1228a8982",
+        "adapted_sha256": "63c8bf0229c29ebf77de3bd5f9942ab54aa6a4c09d7f6f56186b88dd196c851d"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/schemas/schemas.py",
+        "upstream_sha256": "b63ac2ecf46d47b7418656d1d09c88a05a120851ca4e2ee3420d0a20f6ab5fd1",
+        "adapted_sha256": "5c72677d031992af2e1eecccf45223fffbac89d593b9b07147f464f90a0d9fed"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/simulation_context.py",
+        "upstream_sha256": "ad4772edc7bc69951bc2cb4dd0b08198242b96941336375de4dba5b8213e006d",
+        "adapted_sha256": "efaba777a548dedd8f760336d16d81822b563858ae8d03bea933adae086a1db8"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/from_files/from_files.py",
+        "upstream_sha256": "550e4b8f0ccdb23695d4171da60d654d61edf3cce6e223b9f03bef9d5a0d5949",
+        "adapted_sha256": "4b3e11e0c5040b9fcb9d830082c47e5728e1558460d2ced89ff9b04aef56b7d3"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/lights/lights.py",
+        "upstream_sha256": "9ece6455475914d78e5cffeea2fa388e1b0a7f5a1f765d5fe060a78e9320e6dd",
+        "adapted_sha256": "860a006db211f52c6cd7dd33e97b60fabc7c7a6d60dd8b4c5afe875422cb1948"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/materials/__init__.py",
+        "upstream_sha256": "49537f16d27195fa82ad7053cd2117c8c89987a056241ca75528b34f9d78abcb",
+        "adapted_sha256": "70310277c3250d1f003a730fb8ecf54dbbfce402eebe4c3f5686a3172ced11ad"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/materials/physics_materials.py",
+        "upstream_sha256": "660718b20f50c6a6a26b79e3ba089bbbb7391ed6c2d0d7985acc2fa4d4eb701d",
+        "adapted_sha256": "164c08ed3d6f056f86317d6c2677ce09576115ff004468580af78e3b878e3300"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/materials/visual_materials.py",
+        "upstream_sha256": "4ce31ac3928611951e7a9259b7dbfab1c8e0dcb3b67f19ac2f6d0d8510c3642d",
+        "adapted_sha256": "fd1be284f374f22c839fdb69a627a12676ade6237724805ec20f9847e23702c8"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/meshes/meshes.py",
+        "upstream_sha256": "d932396a4b5e8c3a745a52c98152cc946be9d2c383638b3c61ab4bf931ce8638",
+        "adapted_sha256": "7d1337dd4f415a8c895a50f17e857f6836df8ec07c241ba2c872c29422993f83"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/sensors/sensors.py",
+        "upstream_sha256": "e48784c0e5c8d6be52775da0dbf740a5c2c0543b30bce041811a8dd84cbc7de4",
+        "adapted_sha256": "e07d6f28599282ee02a08686aa1ed31b85a64e6d75a5e1821945c6105f9a6b4d"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/shapes/shapes.py",
+        "upstream_sha256": "b376b4c16414a8d150ba4ff3a9ffaf5acce858dec9a0938c2194aa1e2027101c",
+        "adapted_sha256": "84a3e56b1796d75912fbff0dfabb4c5ca9a90d475bf288d93aaa34b4a004b7e8"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/spawners/wrappers/wrappers.py",
+        "upstream_sha256": "ae97bace0b020a23266cfb48724b17f49fe34a08bd3d3bb6c1f2b34bf933c15e",
+        "adapted_sha256": "498f82ea8e7a9a27f72313589e935477bb1542b0fd83f53ae83ec55db634686e"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/sim/utils.py",
+        "upstream_sha256": "04595b1356b5cfba1ae4445430c6107ab302057589aa32d2586f6c72dd36f3ac",
+        "adapted_sha256": "e005cfa3eb49f6983bf6b77bae0aa69a33f97422fffd3843afdf3279e096ff5a"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/terrains/utils.py",
+        "upstream_sha256": "d05ca8f993fab3606f823afa78edb43591284ded913a514c715e46f82b2c6739",
+        "adapted_sha256": "db9d5c9d935a34288aba4d20f1812fa8dda1249f7f103e2e24836694df9dde9d"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/ui/widgets/line_plot.py",
+        "upstream_sha256": "65f39ee4a6593881b6f4eda56f45f210e759046d4f0a6f0e808bc81b23eea7d0",
+        "adapted_sha256": "4d3caad95ebaa75854afdb0c3d2afdf6cb55b03c6131f420dd8f9897bb9f9c2c"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/ui/widgets/manager_live_visualizer.py",
+        "upstream_sha256": "eebf461ac55807f1136877313757b7a5822bf0e92155e553a0cabe93b1587ce7",
+        "adapted_sha256": "8621d995a22217e2cfaee030b7b691996766a56685201f9869e619e953526eea"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/omni/isaac/lab/utils/assets.py",
+        "upstream_sha256": "2c31502074df6d90e25252e44648085e9d3c2c428951d1d51a1b526ff33d97ed",
+        "adapted_sha256": "436ce207906f30565b19b2b6269c53742b86644ca7ff1dc51d3d6748b39f3c2e"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/assets/check_fixed_base_assets.py",
+        "upstream_sha256": "ac8eb5106584461241d9a8de4787dc48f4d70e1831fa0aa81640a6e9fdb22f96",
+        "adapted_sha256": "f06b2f8e1b0e153c89d754669faa423c9ca49b5487599000f8979a5059c6fb49"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_articulation.py",
+        "upstream_sha256": "04a7ee5deaa6eb37223c9c1f4de5b4dcb8e2cdf66d51a9f01b1c92d50f8c6733",
+        "adapted_sha256": "008a692fea92c04ba9b1891d3c3cb3f5c7897679302a9f29cc545c74831035b1"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_deformable_object.py",
+        "upstream_sha256": "e6694cb4126c7f422bba7b9c0ed13f1c7cfb4c79d2eb280d4789ea6791baacd2",
+        "adapted_sha256": "db467613df6a059d7a057cff0ef2943548c084ac5e8262919a0056bc78ec60b6"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_rigid_object.py",
+        "upstream_sha256": "787f3bee45f5681e7af603e0d32e4fb0b41db1db453e212811850211c5786a22",
+        "adapted_sha256": "18f37e28888d236a1f4c98cef4bc97b5a3574aa6c4128da450db2b9f4ccbeafe"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/assets/test_rigid_object_collection.py",
+        "upstream_sha256": "a3339ae2f7e79cb35d2228c26394fc6c75eddd74f34b459387e06330f93bc95b",
+        "adapted_sha256": "aa4ac6fb82dfd7a6ff140ed9ae49d795ceaf8ae10b4722ba445d20c3ccf2cd93"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/controllers/test_differential_ik.py",
+        "upstream_sha256": "904474bef1cc0095b0c7a56c0c3a91004769dfcb63428ab09ea09a474155ffc5",
+        "adapted_sha256": "0e53348c541162dcda783b8514a5e4af1a5cf929c1358ab90022171d04817167"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/controllers/test_operational_space.py",
+        "upstream_sha256": "0ce0308961634b2b0d78b33f05e05ac97c3ea33d80faaaef8774a774e9ca8d95",
+        "adapted_sha256": "fdb41be9bbd88470db2a0bbdaa17a2276718d403ab730ef17465aaa23ded17ff"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_camera.py",
+        "upstream_sha256": "bbf3f223871026df4d73457c0a49214741ac79dee793b9c4000edf1b90d763c9",
+        "adapted_sha256": "a23716b9e7817109cdc1b56d9eee3bdeaa1642cd95677cb940ab3e3dc35627d7"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_floating_base_made_fixed.py",
+        "upstream_sha256": "9ca17cf10bc51c406f2c9f65185bf88855170bb7e9d225d7f0b5e5c7d9cf0472",
+        "adapted_sha256": "c6fbdb9764129393525161b3f41755b9e23f294c89c10f46b92826020b06ee2b"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_legged_robot_clone.py",
+        "upstream_sha256": "8081b8265f7045e121f4feae26a9f2aadbff69a63227c5a43cac3cf5bd546955",
+        "adapted_sha256": "51801f81ecb0a7f6b57cbbcfcb16bbd37006c03914c8c810e4227d85b123373e"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_ref_count.py",
+        "upstream_sha256": "b893dfbf2b805d9648e182e521010e7758e1c751c144aa8a88192b8e4c5dc424",
+        "adapted_sha256": "07dab4335e0bcbcb47a00815e8d40afff326919dc3a349a2d4959db00cede3e3"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/deps/isaacsim/check_rep_texture_randomizer.py",
+        "upstream_sha256": "ba0b44da493a77daa03ebf79c64569fce82e1ce4267bf4f87ebc76d6f534add9",
+        "adapted_sha256": "1ffe2a0611a4e014c0753ffcad32c5fb45a48deddecd6cbfd6a20948178befa2"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/devices/check_keyboard.py",
+        "upstream_sha256": "4feb8242ff8c32f36e279780ddea09f8209987fecaaab85e3dbdc2bb3fd83fc6",
+        "adapted_sha256": "c9b6335dfead3fa0ab6e6e8f8a9e79d45edff7411d1add0162dc47d15c5039bc"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/envs/test_manager_based_rl_env_ui.py",
+        "upstream_sha256": "df9dd15f0b641a04795c4bd43b2c36b954c9378c466a41130f3f979609cb3f4a",
+        "adapted_sha256": "0ea5256bcb4667b1fd7dfd52c1aa3e8f49a5d89de446f26381227ff6c4e6a22f"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/markers/test_visualization_markers.py",
+        "upstream_sha256": "01a97c910705f5442c6f99055d272a3159818dc3a4a444a50166900c335fa3fd",
+        "adapted_sha256": "4f4ffabb83cf5710cfb1cdab8b25a546b1fa270944598990ffb1eb5e48ba0cb3"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/performance/test_robot_load_performance.py",
+        "upstream_sha256": "e61ba451b53f5492448af823b8afda23a80831b5d73fe539da1b840e8e6ea304",
+        "adapted_sha256": "0fd1d6fd36cd25c7aa2495710cb0701a538f2ba0dd956e564d3e0ccd9bf017ed"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sensors/check_contact_sensor.py",
+        "upstream_sha256": "0f6aeb84c418cf14f6def91be10df928a43054cc65c93bc8b2d81a7217305e5b",
+        "adapted_sha256": "0cda6d94360d0d4823629d9df35d2fc602cc7a1121871c017653f1f7bccb1b2a"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sensors/check_imu_sensor.py",
+        "upstream_sha256": "9576eb3822648696196497c12cb0577ff80ddff9400b74c9908aedf9c085958b",
+        "adapted_sha256": "e981f938cba0a3b142c2b0311e2bc6c5dc0a397693b7add291f85f7ff19c7a4f"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sensors/check_ray_caster.py",
+        "upstream_sha256": "33108270b2ad8fc9afea0624a60ffbfbbd59b69645acd75ad8b310aee3d8d28d",
+        "adapted_sha256": "a508b3befa46bd59221c9f3510f22aee1bb88f4f69c60a4783379a81ebd6719a"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_camera.py",
+        "upstream_sha256": "74a5e87a6df42cda0957f64df1d4d7c8e63d2808339f2ff1078603c382b314c5",
+        "adapted_sha256": "cf67715772837a1f512dbc1a82de55f8009e9b73919ce079116f6bd77efaadd6"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_frame_transformer.py",
+        "upstream_sha256": "16a978d2328cc944eeb99408a80eb0b16b865596008dd824a1134fc4b841df55",
+        "adapted_sha256": "0616cdd5c0267cb68dfb26f72ea952e10f504964c0438214fe9feef3bded2f12"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_imu.py",
+        "upstream_sha256": "b6db9f7545649f3700881cb82366ae4bf289a68aa3ac747ebfa05163c54a0c15",
+        "adapted_sha256": "f600f47caba5d8342bf659d98b721f9eddf7d75f58505fa668fde367756767b7"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_ray_caster_camera.py",
+        "upstream_sha256": "63bc21f2e2cd09440346f6e127fb1976eaf7660596101602ece555a20fade5ca",
+        "adapted_sha256": "df81943b5676b99007aa4297bf3e7a016489277d80511a6740d43cd8b8e672e7"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sensors/test_tiled_camera.py",
+        "upstream_sha256": "c78d279254eb3e79d152249548ca0c83e23942112e79b260afa7c613ac5cc3a2",
+        "adapted_sha256": "3a728aadb2ad909e2ff369ee52e86a03bd4eb84139782109404bd8aa9abdbbca"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/check_meshes.py",
+        "upstream_sha256": "2d5e6844ba5b47d55ebf73658d1abf9fbfc6c20e7c6dd6618aa04316a629c192",
+        "adapted_sha256": "d4fcb027ee73faa8f6920251e454fdf66e8c24f7f74193ccf69c3a56eaf6aa2c"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_build_simulation_context_headless.py",
+        "upstream_sha256": "5cee110a2509276ea2c7b02f41646adac3bd9a4701e1a4479eea4e95563768ad",
+        "adapted_sha256": "6ebce36b7f160504df3fb9ec4d7a25c252cc516f31fdd05ac53b1b46ab47f093"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_build_simulation_context_nonheadless.py",
+        "upstream_sha256": "053d928144b9a23247c086b2bffb6343c146e9a2db7aa9e97aa71e4ad3627f6e",
+        "adapted_sha256": "18eb6b993cf3fdf6ad2ea5b8ca0a6aa8d7b6f2a77d0d2de15f71c41badc7bc66"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_mesh_converter.py",
+        "upstream_sha256": "5e4fda463000843ada929c3f35a409f979008538661e73674143a2606ac6a838",
+        "adapted_sha256": "6b83a6f02c49543221b1c397d0316f93b9f41b991592f0b3de9c8fd66efc565d"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_mjcf_converter.py",
+        "upstream_sha256": "0c3e592fb57940f0b1edc531a1c2593a50377e4d9e8832a85bf51bcab727933e",
+        "adapted_sha256": "027b30c83d5a723514757adac563b37c460a174d2d32df11e7069fe9a189c6b0"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_schemas.py",
+        "upstream_sha256": "b6feb12ec5853e73b5e129e8c843e1cf172b421a495a4dfcbb41007580557619",
+        "adapted_sha256": "b5e337277f374f0ffd136c63abcd4c7cfbf90cb38a364f78543faabc33cd480c"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_simulation_context.py",
+        "upstream_sha256": "38f2e7b22961adfb3eaf51f92f6972c5f6689a6d5ed5c6284711700933845bea",
+        "adapted_sha256": "cc682643462d8118dad77afb2800fd82779cbb151147992349bc64d3e0588df8"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_from_files.py",
+        "upstream_sha256": "39e7ca16520c1051076e72f7b44539710bff4e249b46d9f5e873564a00959266",
+        "adapted_sha256": "7f6b1c481e9827c7763f735c51a996ab3398450fd103a5ed7b667becd58e523f"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_lights.py",
+        "upstream_sha256": "4000dc44117c1c1874e07d043f3d9cf16d016cb36cb8b4d6cb541c1ac50e68a9",
+        "adapted_sha256": "960c4ce4b17b9a0b244b5720b9ea2996ae2fcc9b103cfed6ecc501226138f23d"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_materials.py",
+        "upstream_sha256": "0f6e2e6d0d2abfab9d87574f7291c08b9ce51b70b3a25822261405954900a83e",
+        "adapted_sha256": "3ebdd4c151cfffa04c11bb0162cce6f8b834e7cf81a7ba4036efa433169fa9fe"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_meshes.py",
+        "upstream_sha256": "8a1f0ad1e0eed1785acc84991225dd36e03a09f9eac44922970f5ed8505993c6",
+        "adapted_sha256": "714a8f03eff9388a8dde1c29ac943ff3c89d326c23bbcc4ce2cf825d3a485734"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_sensors.py",
+        "upstream_sha256": "72e27cd477edc625b6419c30d986cc5b49c102016cd58195413e35ffa0a95048",
+        "adapted_sha256": "d775919e40bddc381d8a3f4c09c46507b1977ae671e9edcae5c306098d5198a1"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_shapes.py",
+        "upstream_sha256": "3aadb4f645d0873e9b63110ef7df502c7c9f44c328d8e933b7223c7302704263",
+        "adapted_sha256": "9d2f83502c3be65d88ea9f6cf45a9eaaff136f0724bb4a391a03a835e555f253"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_spawn_wrappers.py",
+        "upstream_sha256": "8577cbc1b8b355d4b788a950d4b9779be302d6622a67a63329119dabbf092e29",
+        "adapted_sha256": "a3fb3a478111ee7091a328c61dc90845340cce6e2065d484a9ecf4dc689e0fe6"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_urdf_converter.py",
+        "upstream_sha256": "30341d9a3dfc59ed7de012a84f72648f976ab7842ba34f22a0ca91b6cdfead5f",
+        "adapted_sha256": "e1a0f9b184510e5f25318b6e5598c32dc290dcad2c37a3d1eb0e3e94d8a1893a"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/sim/test_utils.py",
+        "upstream_sha256": "5813f7ca75bbdf8f40532fa2840b3568bfa39b8456e09d1a534f1c6802e2f23d",
+        "adapted_sha256": "c6a5c3d43de2a721fdde9c00f6359cb9cc3a0672995c8eb3f80e296cdf473998"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/terrains/check_terrain_importer.py",
+        "upstream_sha256": "55f01b53e960a31f457b0688b5664a1fdf6c0050e2656bcae1976136a7fa4186",
+        "adapted_sha256": "e2fce0aab100f7986362850c25a84c7bcf4d3d172e9bd47648f6e2fbe09b54e8"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/terrains/test_terrain_generator.py",
+        "upstream_sha256": "247cbdaa013f93d42a52010eaea73744262c898a1f5d3d442207a2ea1e112422",
+        "adapted_sha256": "81850018835e0163fb6a25e9037512dd48fdc252e3d71bfdf1b98bafec63add2"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab/test/terrains/test_terrain_importer.py",
+        "upstream_sha256": "0a7ae2b36514f9845a6a3c781c56a6a8bf2c2cef9b654205509acf6691af8503",
+        "adapted_sha256": "7c1b8adf68ac4a3f69be47429baa5b2c73156f61b3f0ad0b8826eb919a8d27e7"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/__init__.py",
+        "upstream_sha256": "5e80719f2268c0a108e03381cf1c84f3b8e003571709517ac2dc668ad427ff4b",
+        "adapted_sha256": "410480ccb12923adce61f7888cdec1067b9428dbd3aafaf016c13f557c85ae7d"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/factory/factory_control.py",
+        "upstream_sha256": "6ce4a9a1ec6d03306f690dbc6553155ec1acf8952dcabb865bd5d20f8c12c45e",
+        "adapted_sha256": "5e96b326be0b8779d9adf3bb75f8abeb33ceb6565149250d3d573dcc953628e0"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/factory/factory_env.py",
+        "upstream_sha256": "d405ceb68cd478e5cb3f67b50cf0635e5ae527d22b26acb63e96d8aa74e3ca9b",
+        "adapted_sha256": "fd465ae3589cd0c342c6aadedf84d27d6d11bf39f866ccf45d6f46c137ca90bb"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/franka_cabinet/franka_cabinet_env.py",
+        "upstream_sha256": "218263c91dc1154da1a8478924a77245cdeb1ee8ac6ecd5e552e3bd1c67ecab9",
+        "adapted_sha256": "5444eb7519d6c2b0e7e89764526bfae3d4cde465b31db036ce1ac587d1b34fd4"
+      },
+      {
+        "path": "IsaacLab/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/direct/locomotion/locomotion_env.py",
+        "upstream_sha256": "770fd0db97d088320967e80e9ef26bdc9175c1f62dab24753dda14fe15c4c233",
+        "adapted_sha256": "49acd3782ccbb3f9de21dfbd3e9eaa239939d76e7a34d07cbb3cdb0bb432ebeb"
+      },
+      {
+        "path": "IsaacLab/source/standalone/benchmarks/benchmark_cameras.py",
+        "upstream_sha256": "d63754f9b0405ff45fdcc56e77808511343f4f02640f2d837362cac27b4f0e42",
+        "adapted_sha256": "9c25d0bd20cc667df42977e14d40a33dc2b3a9166b97507e2e59ba34d27e5964"
+      },
+      {
+        "path": "IsaacLab/source/standalone/benchmarks/benchmark_non_rl.py",
+        "upstream_sha256": "505d274f63624d04155132f533b7076b0ea715646364671add1de374a02a8acb",
+        "adapted_sha256": "d798b2973e1bdfdb9e5b683a9be6cf5833b71bfb1a0d1641f4cc0f0030ad437b"
+      },
+      {
+        "path": "IsaacLab/source/standalone/benchmarks/benchmark_rlgames.py",
+        "upstream_sha256": "2a78a200ad83a2d351d8785723e9ce9731a545f1feff6c5997ab04c6f53f7f51",
+        "adapted_sha256": "91780c1cf7895b37c44d96e8e39c9226aa379079bf4f2d4defcc818ad503253b"
+      },
+      {
+        "path": "IsaacLab/source/standalone/benchmarks/benchmark_rsl_rl.py",
+        "upstream_sha256": "08daa0bc9f8b8e4395372c921b78c114280d9472c4aaa5b51624b76700ed4dd8",
+        "adapted_sha256": "795e9d38e090d99db45b86c89916dc519eb6647d7962c7f82d4e68c0829959bb"
+      },
+      {
+        "path": "IsaacLab/source/standalone/demos/arms.py",
+        "upstream_sha256": "02c867739126f79dee9bb3e94746f1def50788373a0e529f701ab13771915828",
+        "adapted_sha256": "0384a6170aab9af00d6518d5870cb221f0142059c07b8c9323cf3aa877a92042"
+      },
+      {
+        "path": "IsaacLab/source/standalone/demos/hands.py",
+        "upstream_sha256": "435702e5e0be0d0d3bef9fbfa07263ce17b06b25656f719c29e0beb12f2dbc48",
+        "adapted_sha256": "fff6d66c75c54b647b7e5633eaa228328377082cd5caa26e01cd5caf92456dfa"
+      },
+      {
+        "path": "IsaacLab/source/standalone/demos/quadrupeds.py",
+        "upstream_sha256": "2080c9504814013034717682ca19518137482e24f421101b06b0cdf74d17d0ff",
+        "adapted_sha256": "d3fbfadabc887d59e59127edbebd0141fa318360f61b230038ba235e82daf90d"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tools/check_instanceable.py",
+        "upstream_sha256": "8c97771bb50f982bfc01dca43cb30a3c7d4bb5640efc543960341471a28294cc",
+        "adapted_sha256": "4b4dff4d469615fd4e0baf4c8b92b288dca142471b83ffbdd3b682ebc49adce7"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tools/convert_mesh.py",
+        "upstream_sha256": "954c7bc01d73cc993c20c9621eefda94d8e40464cbb3a4a89300b0d41a363b37",
+        "adapted_sha256": "52a3350aa7345fcaff307fcc9d9822175b211afa42ef03323d607fb3ae154344"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tools/convert_mjcf.py",
+        "upstream_sha256": "db5ece3f74b2083ece92f89fa111ce6363d72107e4699ce3299ebf605ed735db",
+        "adapted_sha256": "0925ff65eb6434998896d6ea20b77188d04a14ae29d933f990da78a1b78f4c78"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tools/convert_urdf.py",
+        "upstream_sha256": "0d31f7c0cd18b1f31814bbde282234e68819a96dca21f3f4eb1557f2cf72c46c",
+        "adapted_sha256": "4d6cb28465da299e8579393faf329d3717ff57d34da5249d2ad686305008c7d7"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tutorials/00_sim/spawn_prims.py",
+        "upstream_sha256": "3eb16b721597c633252c1245d5fe14767da345f73902dc826323addf58daaa80",
+        "adapted_sha256": "a49c4cdb43297dbbe64b53cf9c06e5bba3a6b8a9aaa9996c9bab7a971e3c0e03"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tutorials/01_assets/run_articulation.py",
+        "upstream_sha256": "20ecb5a0187fa8916fb5d095bfb13df1242976db9d7d794ccda92f3bf38c06c7",
+        "adapted_sha256": "63d8cc112cdd000c6f5d487e94be65cf65d4eb12404c9b3574b84190bf92ac19"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tutorials/01_assets/run_deformable_object.py",
+        "upstream_sha256": "5c4df8b106a5b81169b12fcbcff31866561396688e03e3483ff93cafe8b512d9",
+        "adapted_sha256": "6a707ecfce77f32438034cfc1aa0c6f121fe3a94ab6927a7b0750847b12138bf"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tutorials/01_assets/run_rigid_object.py",
+        "upstream_sha256": "bf78bb8bb0c090478225b88f681ac72d4f53ec6cbc5eadc875b2047209ac4d90",
+        "adapted_sha256": "f65dd4b57d14931e369fb6de3e3f280c39a7f4faaf94c8a22a5a24019206d594"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tutorials/04_sensors/run_ray_caster.py",
+        "upstream_sha256": "9bdd08e7d438d061e4fed96b576175bffc54c9ab80a4c846a2abcb3de7af9c72",
+        "adapted_sha256": "c22273a60b377062bb48c94c323e753b38a6e8bf0a2d2bfadc40f393745d12de"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tutorials/04_sensors/run_ray_caster_camera.py",
+        "upstream_sha256": "6ba7af4a74d68f53d9caa87e9dfacb849842011816401b9264799a951ba3291c",
+        "adapted_sha256": "2f479eb44263c26019a595d470c95cdc0f77f0852d9b9f6d1734219f0a7fe6b3"
+      },
+      {
+        "path": "IsaacLab/source/standalone/tutorials/04_sensors/run_usd_camera.py",
+        "upstream_sha256": "e2edc58c1cb0938fd20dca038d9c6666b4a36f3b091529b8b9ee126d3e48e9c7",
+        "adapted_sha256": "04f4c584e421060b784d4409b111d2d5ea0bc1fc4bbcf3ad94071d91e5aea931"
+      },
+      {
+        "path": "server/eval/eval_physics.py",
+        "upstream_sha256": "3ed82cf1a11ac1234d98abde1fbb36a466eefe7430336ca03bb19a48187774ac",
+        "adapted_sha256": "bf48f899341fd63fd5485a7a08bae051f552469a789524ba9bd7d6d20cf34588"
+      },
+      {
+        "path": "server/eval/eval_physics_no_collision_test.py",
+        "upstream_sha256": "2f47efdf6204bfdba4ac874361bc798747ccf8a236b33621b3ab05909a506c4c",
+        "adapted_sha256": "9e2045c627dc11f43a02f166da2c1252abd858b9033fc9515ee3a2ffa4a18c30"
+      },
+      {
+        "path": "server/isaaclab/curobo_tools/curobo_planner.py",
+        "upstream_sha256": "8fb0b96cc531ff7bee3c72f3f63064e84c0ed433320df84f5bc2a4cacddeead3",
+        "adapted_sha256": "c8a896eab99a3e3e020920dde7d2fec92c25f31d3e8a3e89f4bffd9518765a57"
+      },
+      {
+        "path": "server/isaaclab/curobo_tools_mobile_grasp/curobo_planner.py",
+        "upstream_sha256": "03d443dcb5283922e098a4ae8552b235267d1af33fe6bc311d24d1af86b51934",
+        "adapted_sha256": "e8f452df96bd0d915d0effe40bbe7ea7b4ffde13f60a40cb925c19ab2a17feda"
+      },
+      {
+        "path": "server/isaaclab/data_generation_franka_pnp_from_layout_parsing.py",
+        "upstream_sha256": "e137e457b348242dac42d2a1f5d4cde124d56fbcb2a67d8fbf3b8cb077c1cd0b",
+        "adapted_sha256": "3fd74cf2c605b33552cad174e51fb63929cedf2dd8c4c171405bdef25402cc83"
+      },
+      {
+        "path": "server/isaaclab/data_generation_franka_pnp_type_aug_with_pose_aug.py",
+        "upstream_sha256": "d515dff449852a2a0c6fa81f11395f7510b140208a0f14e3f0a1b90d61427010",
+        "adapted_sha256": "c56b2714083d3506cc2962c46dfb6c8950b343274d975e758538f0bf3862b699"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose.py",
+        "upstream_sha256": "c7e25be3b6c8d4cd7374c88eb1339a6d8619173fb29dab5777192225eb2a9c9c",
+        "adapted_sha256": "4bef2a00abcd74af01c7592b96818d8e9a103695700bafbe0714af449b94b4e3"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose_eval.py",
+        "upstream_sha256": "6ca3e8d87f2b6d64a468f70e5d89e41b4fd8f93864f7af26a71c41a2d59544bc",
+        "adapted_sha256": "d5adc3b86dd6fca23d934aba6f5a230b7e3e5665019c82f96ab97ac46babc1bc"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose_v1.py",
+        "upstream_sha256": "12f80e2e927007bb9b64cf2ae41674eea6af2fd40114447a263fdee6c2e55475",
+        "adapted_sha256": "e6b458ffc98763666d47938804a1803ba17571b5c87c5719dd657735db125dab"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose_v1_parallel.py",
+        "upstream_sha256": "50918d236b9585950c5d2b5e4956b1a5d5b98d32c39dfa78205940affc7447ff",
+        "adapted_sha256": "0374629c85a7b47cc87637643d32379841d3fe064febc0bfc5cf15bbdd1a9fac"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose_v2_eval.py",
+        "upstream_sha256": "f412437d5d763b1175fc4d80d445d34f647977912f07c3e541c4057aec5af314",
+        "adapted_sha256": "6f3eae1d8dc7b7deed9dd01f36d1af5acc13c341becc88e9dd6eb5ae64a7b408"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose_v2_eval_aug_type.py",
+        "upstream_sha256": "e8ddc5cac8eb53561bb1382b46e53d35e00642e415046ce3b7bf5b3d2a7c042f",
+        "adapted_sha256": "d22749a0d8949803dd7a564219e00f3530369e5c914f283e5c66f88391114fab"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose_v2_on_aug_type_parallel.py",
+        "upstream_sha256": "b31b7897dfd23bde5f239c0c6bcd3cf0c167ee58b91f6cdbc5ad371e1f3482e0",
+        "adapted_sha256": "e7860685ed50abc37c1f8daff256f11bdec2b54d2fbac45c76e97670e4987af7"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose_v2_on_aug_type_parallel_vis.py",
+        "upstream_sha256": "e54fb25b95eabc7c5aca1f64f7ca1d68281ba13a8ca03931b89a60f80599d2c3",
+        "adapted_sha256": "51c029d95d877c8eec149172af3a6cb1d736976d858bf5f16b45e208541df985"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose_v2_parallel.py",
+        "upstream_sha256": "ddf47b1a656081b525af207affdb644c7da7ce45dd69a0f1e5473adcffb17406",
+        "adapted_sha256": "9a084a8547b6e5dca06cdcd4b7285c32324174c2087335c3afc8ba804de91da8"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_aug_pose_v2_parallel_vis.py",
+        "upstream_sha256": "8b0ab751cc788e92c05598129c9c04be7cb2b2638d80356b93df9351ca358de1",
+        "adapted_sha256": "f8537460528d6d57932bec711853464b2ce3e0459e4e1b9a87a40253fa4e04cf"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_v0.py",
+        "upstream_sha256": "3c9e1981991d78e19d5c024cf0b697c98510602fbf0bd5e95fdd8de54b31ef40",
+        "adapted_sha256": "f03dc7306fc93e9aff081906da687aef5c5f0e76fa5dfa26f8a80d6882bb2a45"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_v1.py",
+        "upstream_sha256": "fd31440e82165408faa4c5b362806ec3c0acd51789657b5973d97c5aefe28268",
+        "adapted_sha256": "933ff595301eb151d1ba8f286b1f3638121095b64bd547537099fe0855945739"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_v2.py",
+        "upstream_sha256": "a5a579af306420f14faf68c9be3af38188471f4f7c1a32fb34f7b97783b08203",
+        "adapted_sha256": "109c67437ccda4eefa15dfa0748ee0faf4fe2af2862eb513162d34c836399853"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_v2_eval.py",
+        "upstream_sha256": "a527f243ed57beb8004496419caa044d74361140ca09c579aa9024553c9bc468",
+        "adapted_sha256": "b1db33c873a54abdc34d528ac10a8e5cc03073d4323b2debae517ded5f71dc04"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_v3.py",
+        "upstream_sha256": "1cae865aff6c6598aaf13df50a97998b73f50d8c3d4dc0505f046bf5ad9427a4",
+        "adapted_sha256": "bd16b3a0691e24cacb9b26141c194b8e443b65ab0e5505447fd424c34e7e2005"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_v3_eval.py",
+        "upstream_sha256": "b920881a2d5807559214374f752a5e6dd0f3fe10f429f84cf424637ceee678ec",
+        "adapted_sha256": "716c77866bd5586fec6d1bbd0a8ef1fa6320269e8f78f201397077a024cf997f"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_v4.py",
+        "upstream_sha256": "650cc117e3d28c7f11ffa49668a0250ca3ae7475ffe9b5e057ada02bfaa68d62",
+        "adapted_sha256": "13fc9469189018888c79910ceb2f5fa54b9a1f632a62347e8cd51792b30612e9"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_v5.py",
+        "upstream_sha256": "51c590a20cbbed579dc2d605019e16f2acdd12ca6c2af5befcdb9072af7eccd3",
+        "adapted_sha256": "2066073033de380575b64049bdefc9411ac30f786d19e3efdbcdf42a51d389f5"
+      },
+      {
+        "path": "server/isaaclab/data_generation_grasp_v6.py",
+        "upstream_sha256": "a1459b55f3588af2ff897a80099d72b010a3fe92a4e63399b121d71d6c0a9b4c",
+        "adapted_sha256": "622d607fe7d72d6d92b66d254a5170f2e877bcce3a221cd2aa0b7bcf2c9167d7"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_franka_mobile_manipulation_with_pose_aug.py",
+        "upstream_sha256": "3dc6870cae929eae607c4d0a392bbc35d46ab91203ca08c34d6b2f2f60d4d9d5",
+        "adapted_sha256": "ca71e99e30813277fb9b346f1729b92b198d3b004c20a9f63b2f541352664a74"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_from_layout_parsing.py",
+        "upstream_sha256": "1e940be73a9216db7afec0e06eaf694c5f0055c22771da36277829abdbaa2f77",
+        "adapted_sha256": "54a082b3010ab015e5aac90607dc7c6c7e35b96016bf6007e96520b9a8c7bfb6"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_from_layout_parsing_pose_aug.py",
+        "upstream_sha256": "d658b919f6091b0568c2bf7a4455646670c5f50e119c2984fe3cc86d74d5a889",
+        "adapted_sha256": "86c472fdb74d88e399be76be77d089a19fd4b897e2c04529c46d4673ea844ffd"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v0.py",
+        "upstream_sha256": "1e46c7faaf13a6b05dbd491af610697f1d10a033efbd84bba8658c15ff8520ba",
+        "adapted_sha256": "6a8557b4d5e39bb99b449ab4878b7c7de95cd895fc1cd14d85403b249ca10c67"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v1_deprecated.py",
+        "upstream_sha256": "890bd2f6a0218c77bd4c149cf378a3e29b1c54a7440e67c0a758201b61e8d5fb",
+        "adapted_sha256": "991ac3495db054653ec0c3f17b69c42198d20aee69a0203be3ffbcac6faa67c8"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v2.py",
+        "upstream_sha256": "93107f37269817d2ad927e7184a8825026caab3e95132db8aa8dc9e11ab6f6d1",
+        "adapted_sha256": "1cbc8371ff3e2fe871f3fb8b7837930354ab47da4ff5867bc01cb425d23ac917"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v3.py",
+        "upstream_sha256": "770a1db75b4955d92a32913718441644ba1e7a315c95ff9cd2ea09e6ab775487",
+        "adapted_sha256": "d7472222925a98854845fa7767be6daef0173e2b20633e2ae7be443e9a1b17c6"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v4.py",
+        "upstream_sha256": "fa02665890f6c512e611e0c7e7a6c6040aa70e161884229d93b1806bd21fdc53",
+        "adapted_sha256": "b1fe69c47764f954286314aa8dcb3c656a9a64de8799a523f114e29724b8359e"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v4_eval.py",
+        "upstream_sha256": "0f22d5e3609fc141eb9c51429f05c24d87138e9d3b177fb54736187b54dda435",
+        "adapted_sha256": "ae98bc9325304a0c8284a3cb1a37adb99c979e479f68fcc3a3aa9daadec3cf67"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v4_eval_sample.py",
+        "upstream_sha256": "7162527edcb177315b56bdd6f1c19b12b5a76b36baa8b6e5c517f9333e6acd07",
+        "adapted_sha256": "ec3afef38036f07b9f98d343d5c0c2c4245598696144325b8bfad9a0ecb852d4"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v4_eval_sample_pose_aug.py",
+        "upstream_sha256": "417ad8bc86492d9e82452f61ecf662ca2fca91e844a5c1b9068f8dce2d07c9cf",
+        "adapted_sha256": "831d0a7817a3bff81f077e6a5a2006b39f0956011ff56331857763cea834fa5f"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v4_eval_sample_pose_aug_from_parse.py",
+        "upstream_sha256": "143d70908b34dd994bccb3a0beb7f2533204276f973e0dd07f9fa3dd00d23dc2",
+        "adapted_sha256": "0ace509d9ff32d62d7d165b3bfb70f93e0525a988e59a9f0f61d35028239303c"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v5.py",
+        "upstream_sha256": "f5648983b71687beb17f186348305e754603735f6edb1fcb009fa695d4c984a3",
+        "adapted_sha256": "6782553c4b1d6f95df00cafbe0409e19e46a1dc8ec9a13b4d34fa897bdf180cb"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v5_eval.py",
+        "upstream_sha256": "1629874ad26b8d0b5c96203b2bfa715970b092cfce3fecc86abe30bbc676ac5d",
+        "adapted_sha256": "e26129c34215f03b684d9cdd933938df567d936873a7b177f7694e2a3d8f02ff"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v5_pose_aug.py",
+        "upstream_sha256": "fca5671da6e1c9ae33a4b317d63c659c623cbec383133695a3444f54f5c7077b",
+        "adapted_sha256": "b737b7301086129b804028bcc91996982884e6cb0f68137b69e1b81bdf41f5e0"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v6.py",
+        "upstream_sha256": "d9a0f998020dbf7f0d6852a937a9719b6bec8d506ed84ddc900a8fcecf6b3be5",
+        "adapted_sha256": "709f79f2000535e2f16c45b312514d38b7d5d1884f63888ee15d59843b42851a"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v6_eval.py",
+        "upstream_sha256": "ae7f1322dd7bfb72e17a2cbaa42ecb399d9f219d1fb31e2bb6695dc98f4e0b03",
+        "adapted_sha256": "a9e22d4fae448656a5cb3ee6dd3f5489f3694c87e1d0b7e5b0d941b2c94b0b1b"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7.py",
+        "upstream_sha256": "5aea553b602502854d20bf7ad333a840935771118b682a1283d8536f6bb80599",
+        "adapted_sha256": "9dee04a99cb927d933daad09690c54f5c02481ea84d96c23f69916147811a114"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7_eval.py",
+        "upstream_sha256": "9a5e1a4d9c4c3916b06f8609b67b1e304d636c8e11ae4eb5bb290c632c34fb87",
+        "adapted_sha256": "b02671a757098bab1dbe452534ca339d1d5de3f79bce57a8abc085154f103ff1"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7_eval_multi_step.py",
+        "upstream_sha256": "5b947b1ae9b739f96ff711f5122533a7814ecbfe46787d19bb5e5cafb71289b3",
+        "adapted_sha256": "798b2cc416904df1e271c23e39d86c41501f2325dc8de0d103e3bc18698eaa36"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug.py",
+        "upstream_sha256": "7786b09674a62fb5ae0b14256b74559b296847e251f4a64c6d6652a9864c45e6",
+        "adapted_sha256": "fbe5c6b455c358d3baf482c76506290478519fe8e142aa8924da1d414359953c"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug_from_parse.py",
+        "upstream_sha256": "4ac75b9a8568d101ffa5acef2da37a99aff5b2305c94686524f376fe4b4bd1d0",
+        "adapted_sha256": "e71cf43dad81aefe2e50a3b428c478d3f1109ab84d3ec2e4f5f27a7b5b18e8df"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug_multi_step.py",
+        "upstream_sha256": "d23fd395f70ac23410189d77874c654aa0469f76e3e0180dced76bdb1b449f0e",
+        "adapted_sha256": "1d8d5a41fd45337f92c4a8a78674a7d748bea90295070212276c6f964417172a"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7_eval_pose_aug_multi_step_from_parse.py",
+        "upstream_sha256": "62f82a3faeacde4ba895976f5e6d2f2d597033f9ea1548ee22d9d512572415e1",
+        "adapted_sha256": "11360ea5810b014e58306d792f81b7028c7f1fb582d6a17f22af63e0b50324f4"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7_pose_aug.py",
+        "upstream_sha256": "a64b8df2627e21fbb54bb87fa9d8b160dacb6fdbbc0338935622b6394745b16a",
+        "adapted_sha256": "dd2fedb99f20f03402a0cf10def6179497c6afa0b0b7ded7f6990fffe8dfdb7b"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7_pose_aug_and_scene_aug.py",
+        "upstream_sha256": "b6873da9a24cba330818fd12873ee2640972c7a911e53b2f0c28f2154dc1b97c",
+        "adapted_sha256": "0fe3cbf871a04b8c79cb5b5835b81a813617ee63d5c2303e33ff03e981e6809b"
+      },
+      {
+        "path": "server/isaaclab/data_generation_mobile_manipulation_v7_pose_aug_and_scene_aug_motion_plan_eval.py",
+        "upstream_sha256": "732e7a901bef9212fc47ffa669ce9f4d2405c4c2adecadd9dee3dedf43390f29",
+        "adapted_sha256": "8be31cd01bd3d8bf5fe77a7334d2b6161d8ac52bb8954e4c11aa79c948e8dd1e"
+      },
+      {
+        "path": "server/isaaclab/exp_figs_mm_aug_vis.py",
+        "upstream_sha256": "d39336b5902ee4a4ec11fec81d518fba8d61cefa7b85ec4cc71d9edd6f510e33",
+        "adapted_sha256": "e14648ddddc82d4bb9b3b697300c5c65d3b4e66ff01b1736c6bfd19ce15c6dd8"
+      },
+      {
+        "path": "server/isaaclab/exp_figs_mm_original_vis.py",
+        "upstream_sha256": "f7e625c978848e6bf8387bfd827a620ba51ee0806a362c702a5d378225f5d607",
+        "adapted_sha256": "1ecf6f4b68661fa6ee036d08a3e64e4435c687a6d4b5916e17a6d756ba4c28ef"
+      },
+      {
+        "path": "server/isaaclab/exp_figs_mm_teaser_vis.py",
+        "upstream_sha256": "30011bf422e90839cd20164d64708513abd96b974c5db9097bbdab1373e678c6",
+        "adapted_sha256": "d0948bfc5e5e777b3bd83b09136f7380f60efce9f25e8208f62c090f2a95f604"
+      },
+      {
+        "path": "server/isaaclab/exps_fig_articulation.py",
+        "upstream_sha256": "7409b6f40a999c756b4c654944fadd9f171ab14ddb7659ad0ce0603654b902e8",
+        "adapted_sha256": "1c52247f54edd539e1ff37402049147119e6319273b9fbe2b020a69875df64be"
+      },
+      {
+        "path": "server/isaaclab/exps_fig_articulation_close.py",
+        "upstream_sha256": "d24bd12630e8560c3e1bf0ded803325c3803c628ee99a81a89044ded3063b28a",
+        "adapted_sha256": "6aa7dec9319e5615bd2319d38c3b3fa4dcc17f3886d8d71071fb2d870faf90fc"
+      },
+      {
+        "path": "server/isaaclab/exps_fig_teaser.py",
+        "upstream_sha256": "e137e457b348242dac42d2a1f5d4cde124d56fbcb2a67d8fbf3b8cb077c1cd0b",
+        "adapted_sha256": "50283270299fbb2122383803f540787259781bd697fb71036490ae67577eecd2"
+      },
+      {
+        "path": "server/isaacsim/isaac.sim.mcp_extension/examples/franka.py",
+        "upstream_sha256": "20eb71246e35a11e627d12c693b9cfd6dcc34f880d47a1e559c376d1ebf7d860",
+        "adapted_sha256": "fd6fe86d79e867a702a071e06c40d1e3e4d162ed560bc8c1b3a18e1486a70074"
+      },
+      {
+        "path": "server/isaacsim/isaac.sim.mcp_extension/examples/franka_grid.py",
+        "upstream_sha256": "b1d2e4ab38ba3e642767539118a55622b473fed7b9fa111f98bfa6655700b96a",
+        "adapted_sha256": "7aa41e3258d8cb451f5f2fea84b919b7fc3a039ebfd175d667816ce6a3ff7b13"
+      },
+      {
+        "path": "server/isaacsim/isaac.sim.mcp_extension/examples/g1.py",
+        "upstream_sha256": "fd536a39bb2ded211d49af4fb84b303dcbc20d2f065834170614e4812292cc7b",
+        "adapted_sha256": "238a45f548399d006d86cc80839907b8eefef108d65454d4834f2e0b460f7d4c"
+      },
+      {
+        "path": "server/isaacsim/isaac.sim.mcp_extension/examples/go1.py",
+        "upstream_sha256": "c21394dc83c4108d6f9cd217ba5add61ff1017b2c2e6409398eddf77ddb90913",
+        "adapted_sha256": "b99313df2772360ac75287b9197d20687306b917098336093d66ca25001bfe87"
+      },
+      {
+        "path": "server/isaacsim/isaac.sim.mcp_extension/isaac_sim_mcp_extension/extension.py",
+        "upstream_sha256": "44747b3280bb3d40a21b11017bfdcb3d3e8f572a156ce63284cc3b4d19e60fcf",
+        "adapted_sha256": "faa4f0522c93c92ed44170b5cde70c1d08c07c03942c3cf66141c6c35de28be1"
+      },
+      {
+        "path": "server/isaacsim/isaac.sim.mcp_extension/isaac_sim_mcp_extension/usd.py",
+        "upstream_sha256": "41c07833db5222b5b1694cd5c68cd359bbae32ae93189de8ba63724b05f09023",
+        "adapted_sha256": "7963a03292de4328b65be28a056e8896dcd9c778e4d0a0c621a162ed396d3b2b"
+      },
+      {
+        "path": "server/isaacsim/isaac_mcp/server.py",
+        "upstream_sha256": "187226c56b4830e213082e7016895be50b4b4e8bb63f83bacdbe76a7f75aaa3d",
+        "adapted_sha256": "37f97e3e43c697d8cfd1a759df1ceef746d36cf8bcb06bb7df24c30c1b283a16"
+      },
+      {
+        "path": "server/m2t2_utils/infer.py",
+        "upstream_sha256": "638b24a4e59af22c6145f581c3b5b504f786d06eb31260533b74203c9422390a",
+        "adapted_sha256": "a4f1501d5b48b7fea8f98bada8edcee256b271da3c8b2b2359a53cd7c1e3b7f5"
+      },
+      {
+        "path": "server/utils.py",
+        "upstream_sha256": "1205c422937d8112309ca496591636354650da466d056b68a05758df21916acf",
+        "adapted_sha256": "21b475ac38f4ccf56d3343aa6a328429813de62deaa093423a2d522d51fe5f3b"
+      }
+    ],
+    "patch_sha256": "f4e382b9c10b5e3503dedc686a73a2af5228311f9bd99c71542d7ea74e55b966"
+  },
+  "curobo": {
+    "commit": "d64c4b005459db10c5dd867d8b30a87d5bda9bdb",
+    "upstream_tracked_clean": true,
+    "changed_files": [
+      {
+        "path": "curobo/src/curobo/geom/sdf/world_mesh.py",
+        "upstream_sha256": "52a45886651f0035c1f4fa4f55df35b09a0edb80a3370e882a022bea2a1a05fa",
+        "adapted_sha256": "1380044f9d0daf65b46f53f500c095725d0b5c82b825ac3f2c33c10ffa6622a6"
+      }
+    ],
+    "patch_sha256": "8eb9493838ea22691f1ecdb1d07d80425c647d67d86a7031cdc2247341b9447e"
+  }
+}

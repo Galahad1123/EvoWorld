@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT=/path/to/EvoWorld
+RUN="$ROOT/experiments/phase8-milk-bin-20261108"
+source "$ROOT/adapters/sage_robot/env.sh"
+export EVOWORLD_SAGE_FRANKA_ONLY=1 EVOWORLD_TARGET_OBJECT=milk EVOWORLD_PLACE_OBJECT=desk EVOWORLD_TABLE_OBJECT=desk
+collect_split() {
+ local split="$1" count="$2" seed="$3" attempts="$4"
+ mkdir "$RUN/$split"
+ cd "$RUN/$split"
+ printf '%s\n' "$split" > "$RUN/collection-current-stage.txt"
+ EVOWORLD_MAX_TRIALS="$attempts" EVOWORLD_DP_SEED="$seed" timeout --kill-after=15 6300 "$ROOT/envs/sage-robot/bin/python" -u "$ROOT/adapters/milk_bin/collect.py" --headless --enable_cameras --num_envs 1 --num_demos "$count" --filename experts --layout_id layout_evoworld_cube_control --room_id room_evoworld_30dd907ee170 --experience "$ROOT/envs/isaacsim6/lib/python3.12/site-packages/isaacsim/apps/isaacsim.exp.base.python.kit" > collector.log 2>&1
+ "$ROOT/envs/sage-robot/bin/python" - "$count" <<'PY'
+import sys,h5py,json
+from pathlib import Path
+with h5py.File(next(Path('.').glob('robomimic_data/*/experts.hdf5'))) as f:
+ assert len(f['data'])==int(sys.argv[1]),'Insufficient successful demonstrations; no downstream training'
+PY
+}
+trap 'code=$?; echo "$code" > "$RUN/collection-exit-status.txt"' EXIT
+collect_split train 30 511 60
+collect_split validation 5 8511 17
+printf '%s\n' complete > "$RUN/collection-current-stage.txt"

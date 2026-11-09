@@ -1,0 +1,6 @@
+# Preserve upstream patches, license texts and imported historical sources verbatim.
+patches/** -whitespace
+third_party_licenses/** -whitespace
+adapters/** -whitespace
+scripts/** -whitespace
+docs/legacy-launchers/** -whitespace

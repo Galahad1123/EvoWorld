@@ -1,0 +1,27 @@
+# Relative paths are relative to THIS file. Never commit configs/local.yaml.
+storage_root: ../storage
+credentials_file: ~/.config/evoworld/credentials.env
+environments:
+  gpt: ../envs/g1-realtosim/bin/python
+  expert: ../envs/sage-robot/bin/python
+  rlinf: ../envs/rlinf-py312/bin/python
+  sim: ../envs/isaacsim6/bin/python
+  convert: ../envs/rlinf-py312/bin/python
+upstreams:
+  RLinf: ../upstream/RLinf
+  sage: ../upstream/sage
+  g1-realtosim: ../upstream/g1-realtosim
+  IsaacLab-RLinf: ../upstream/IsaacLab-RLinf
+resources: {} # Exact task resource paths; see docs/RESOURCES.md.
+network:
+  hf_endpoint: https://hf-mirror.com
+  pip_index_url: https://pypi.tuna.tsinghua.edu.cn/simple
+  gpt_base_url: https://api.openai.com/v1
+  gpt_proxy: null
+# Optional for Isaac distributed as libraries rather than a standalone interpreter:
+# isaac_experience: /path/to/isaacsim/apps/isaacsim.exp.base.python.kit
+# Observation definitions are experiment identity, not camera preference overrides.
+observation_contract: milk-bin-center-wrist-v1
+resource_checks: {}
+# Each training dataset/checkpoint must declare its observation_contract under
+# resource_checks; add sha256 mappings for model/resource integrity verification.

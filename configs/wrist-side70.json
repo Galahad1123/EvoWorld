@@ -1,0 +1,16 @@
+{
+  "version": "wrist-side70-preview-v1",
+  "position_hand_m": [
+    0.07,
+    0,
+    0.035
+  ],
+  "rotation_ros_wxyz": [
+    0,
+    -0.19927144567742688,
+    0,
+    0.9799443305298665
+  ],
+  "status": "single-pose-preview-only",
+  "default_enabled": false
+}

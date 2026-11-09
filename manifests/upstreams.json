@@ -1,0 +1,67 @@
+{
+  "RLinf": {
+    "url": "https://github.com/RLinf/RLinf.git",
+    "commit": "1bf78980d9339cbc67497eddceb9a1e3a74e2acc",
+    "patch": "patches/RLinf-current.patch",
+    "excluded_untracked": [],
+    "installer_patch": "patches/rlinf-installer.patch"
+  },
+  "IsaacLab-RLinf": {
+    "url": "https://github.com/RLinf/IsaacLab",
+    "commit": "4246b6b4f4a3e74ee20e002ed7536b1c788d39f4",
+    "patch": "patches/IsaacLab-RLinf-current.patch",
+    "excluded_untracked": []
+  },
+  "curobo": {
+    "url": "https://github.com/NVlabs/curobo.git",
+    "commit": "d64c4b005459db10c5dd867d8b30a87d5bda9bdb",
+    "patch": null,
+    "excluded_untracked": []
+  },
+  "g1-realtosim": {
+    "url": "https://github.com/rascal-yang/g1-realtosim.git",
+    "commit": "eb80bd505a749b367d129a9283c672b8cc34317c",
+    "patch": null,
+    "excluded_untracked": []
+  },
+  "sage": {
+    "url": "https://github.com/NVlabs/sage.git",
+    "commit": "fe3966013a495dc1642710de93a83ddf66e534a0",
+    "patch": null,
+    "excluded_untracked": []
+  },
+  "nvdiffrast": {
+    "url": "https://github.com/NVlabs/nvdiffrast.git",
+    "commit": "253ac4fcea7de5f396371124af597e6cc957bfae",
+    "patch": null,
+    "excluded_untracked": [
+      "build/lib.linux-x86_64-cpython-312/_nvdiffrast_c.cpython-312-x86_64-linux-gnu.so",
+      "build/lib.linux-x86_64-cpython-312/nvdiffrast/__init__.py",
+      "build/lib.linux-x86_64-cpython-312/nvdiffrast/torch/__init__.py",
+      "build/lib.linux-x86_64-cpython-312/nvdiffrast/torch/ops.py",
+      "build/temp.linux-x86_64-cpython-312/.ninja_deps",
+      "build/temp.linux-x86_64-cpython-312/.ninja_log",
+      "build/temp.linux-x86_64-cpython-312/build.ninja",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/antialias.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/common.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/cudaraster/impl/Buffer.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/cudaraster/impl/CudaRaster.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/cudaraster/impl/RasterImpl.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/cudaraster/impl/RasterImpl_kernel.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/interpolate.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/rasterize.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/texture.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/common/texture_kernel.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/torch/torch_antialias.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/torch/torch_bindings.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/torch/torch_interpolate.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/torch/torch_rasterize.o",
+      "build/temp.linux-x86_64-cpython-312/csrc/torch/torch_texture.o",
+      "nvdiffrast.egg-info/PKG-INFO",
+      "nvdiffrast.egg-info/SOURCES.txt",
+      "nvdiffrast.egg-info/dependency_links.txt",
+      "nvdiffrast.egg-info/requires.txt",
+      "nvdiffrast.egg-info/top_level.txt"
+    ]
+  }
+}

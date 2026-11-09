@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Run only after the native model, checkpoint, loader and online smoke gates pass.
+set -euo pipefail
+ROOT=/path/to/EvoWorld
+RUN="$ROOT/experiments/phase8-milk-bin-20261108"
+cd "$ROOT"
+trap 'code=$?; echo "$code" > "$RUN/pipeline-exit-status.txt"' EXIT
+printf '%s\n' waiting_for_demonstrations > "$RUN/pipeline-stage.txt"
+while [ ! -f "$RUN/collection-exit-status.txt" ]; do
+  kill -0 "$(cat "$RUN/collection.pid")" || { echo 'Collection process ended without completion record'; exit 1; }
+  sleep 15
+done
+test "$(cat "$RUN/collection-exit-status.txt")" = 0
+source adapters/rlinf/env.sh
+export PYTHONPATH="$ROOT/adapters/milk_bin:$PYTHONPATH" RLINF_EXT_MODULE=rlinf_extension
+unset EVOWORLD_MODEL_GPU_FRACTION HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
+export NO_PROXY=localhost,127.0.0.1
+printf '%s\n' validating_and_exporting > "$RUN/pipeline-stage.txt"
+for split in train validation; do
+ python adapters/milk_bin/audit_dwell.py "$RUN/$split" > "$RUN/$split/dwell-audit.log" 2>&1
+ count=30
+ if [ "$split" = validation ]; then count=5; fi
+ "$ROOT/envs/sage-robot/bin/python" adapters/milk_bin/verify_collection.py "$RUN/$split" --count "$count" > "$RUN/$split/verify-collection.log" 2>&1
+ python -u adapters/milk_bin/export_dataset.py --run "$RUN/$split" --output "$RUN/lerobot-$split" --count "$count" --split "$split" > "$RUN/$split/export.log" 2>&1
+done
+python adapters/milk_bin/inspect_sft_data.py --dataset "$RUN/lerobot-train" > "$RUN/formal-sft-data-check.log" 2>&1
+python adapters/milk_bin/expert_video.py "$RUN/train" "$RUN/expert-dual-camera.mp4" > "$RUN/expert-video.json"
+python - "$RUN" <<'PY'
+import json,sys,hashlib
+from pathlib import Path
+run=Path(sys.argv[1]);source=Path('adapters/milk_bin');dst=run/'executed-adapters';dst.mkdir()
+for file in source.glob('*'):
+ if file.is_file():(dst/file.name).write_bytes(file.read_bytes())
+for name in ['native-sft-batch4-report.json','native-checkpoint-verification-final.json','online-smoke/report.json']:
+ result=json.loads((run/name).read_text())
+ assert result.get('passed',result.get('complete',False)),name
+(run/'training-launched.json').write_text(json.dumps({'global_batch_size':4,'micro_batch_size':4,'optimizer_updates':20000,'warmup_updates':1000,'save_interval':3000,'train_episodes':30,'validation_episodes':5,'host':'5090-1','sft_config_sha256':hashlib.sha256((source/'sft.yaml').read_bytes()).hexdigest()},indent=2))
+PY
+printf '%s\n' sft_20000_updates > "$RUN/pipeline-stage.txt"
+python -u upstream/RLinf/examples/sft/train_vla_sft.py --config-path "$ROOT/adapters/milk_bin" --config-name sft > "$RUN/sft-training.log" 2>&1
+CHECKPOINT="$RUN/sft/milk-bin-pi05-sft/checkpoints/global_step_20000/actor"
+python adapters/milk_bin/verify_sft_checkpoint.py "$CHECKPOINT" --output "$RUN/formal-checkpoint-verification.json" > "$RUN/formal-checkpoint-verification.log" 2>&1
+printf '%s\n' baseline_calibration_20 > "$RUN/pipeline-stage.txt"
+python -u adapters/milk_bin/evaluate.py --checkpoint "$CHECKPOINT" --dataset "$RUN/lerobot-train" --output "$RUN/baseline-calibration" --episodes 20 --seed-start 20000 --video-count 3 > "$RUN/baseline-calibration.log" 2>&1
+python - "$RUN" <<'PY'
+import json,sys
+from pathlib import Path
+run=Path(sys.argv[1]);report=json.loads((run/'baseline-calibration/report.json').read_text());sr=report['success_rate']
+(run/'baseline-gate.json').write_text(json.dumps({'success_rate':sr,'ready_for_dsrl':.3<=sr<=.7,'dsrl_launched':False,'next_action':'review baseline calibration before the bounded4h DSRL run','reserved_formal_holdout_seeds':list(range(30000,30050))},indent=2))
+PY
+printf '%s\n' baseline_ready_for_review > "$RUN/pipeline-stage.txt"

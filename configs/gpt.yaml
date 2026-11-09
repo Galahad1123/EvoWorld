@@ -1,0 +1,5 @@
+model: gpt-6-astra
+reasoning_effort: medium
+max_output_tokens: 16000
+timeout_seconds: 600
+max_retries: 0

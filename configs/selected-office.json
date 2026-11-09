@@ -1,0 +1,23 @@
+{
+  "selected_by": "user",
+  "gallery_candidate": "05",
+  "layout_id": "layout_acb3ece0",
+  "dataset_revision": "d425de49ff445fd3903d790a11461d23ffd0c7dd",
+  "background_directory": "resource:office_background",
+  "background_sha256": "eec0fcd5f6a84515fe81d6b3d15a9d69a63c27de481671db6ab2d41dfea22c1d",
+  "status": "camera_preview_and_short_hold_verified",
+  "scope": "preferred background for subsequent photo-scene work; historical training/evaluation presets remain unchanged",
+  "floor_material": {
+    "floor_mesh": "/Office/floor_room_efdc4606",
+    "changed_attribute": "/Office/floor_room_efdc4606_mat/PBRShader.inputs:diffuseColor",
+    "diffuse_linear_rgb": [
+      0.55,
+      0.55,
+      0.55
+    ],
+    "roughness": 1.0,
+    "metallic": 0.0,
+    "description": "User-approved light-gray matte floor. Original black texture disconnected; geometry/collision/physics and other materials unchanged."
+  },
+  "tabletop_camera_profile": "configs/tabletop-front-center-down-v4.json"
+}

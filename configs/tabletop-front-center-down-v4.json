@@ -1,0 +1,29 @@
+{
+  "name": "office05-tabletop-front-center-down-v4",
+  "position_world_m": [
+    2.08,
+    2.67,
+    2.15
+  ],
+  "target_world_m": [
+    2.08,
+    1.9,
+    1.22
+  ],
+  "robot_forward_world": [
+    0,
+    1,
+    0
+  ],
+  "description": "Move12.25cm toward Franka along the table axis, retain height, tilt downward about6.75degrees versus v3.",
+  "policy_resolution": [
+    128,
+    128
+  ],
+  "intrinsics": "focal length24mm; inherited sensor aperture; matched HD and policy FOV",
+  "preview_resolution": [
+    768,
+    768
+  ],
+  "focal_length_mm": 24.0
+}

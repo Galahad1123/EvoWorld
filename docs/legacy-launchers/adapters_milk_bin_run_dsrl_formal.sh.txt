@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT=/path/to/EvoWorld
+RUN="$ROOT/experiments/phase8-milk-bin-20261108/dsrl-formal-20261108"
+cd "$ROOT"
+mkdir -p "$RUN"
+exec 9>"$RUN/launch.lock"
+flock -n 9 || exit 1
+test ! -e "$RUN/started.json"
+finish() {
+  code=$?
+  trap - EXIT
+  if [ -n "${monitor_pid:-}" ]; then kill "$monitor_pid" 2>/dev/null || true; fi
+  if [ -f "$RUN/started.json" ]; then
+    "$ROOT/envs/rlinf-py312/bin/python" adapters/milk_bin/dsrl_cleanup.py --marker "$RUN/audit" --output "$RUN/cleanup.json" || code=1
+  fi
+  echo "$code" > "$RUN/exit-status.txt"
+  exit "$code"
+}
+trap finish EXIT
+source adapters/rlinf/env.sh
+export PYTHONPATH="$ROOT/adapters/milk_bin:$PYTHONPATH" RLINF_EXT_MODULE=dsrl_extension
+export OPENPI_DATA_HOME=~/.cache/openpi
+export LD_LIBRARY_PATH="$ROOT/runtime/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}"
+export EVOWORLD_DSRL_AUDIT_DIR="$RUN/audit"
+unset EVOWORLD_MODEL_GPU_FRACTION HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
+export NO_PROXY=localhost,127.0.0.1 HYDRA_FULL_ERROR=1
+python - "$RUN" <<'PY'
+import hashlib,json,subprocess,sys,torch
+from pathlib import Path
+from dsrl_handoff import readiness
+run=Path(sys.argv[1]);manifest=json.loads((run/'source-manifest.json').read_text());assert readiness(manifest)=='ready'
+assert torch.cuda.get_device_properties(0).total_memory>60*2**30
+used=int(subprocess.check_output(['nvidia-smi','--query-gpu=memory.used','--format=csv,noheader,nounits'],text=True).strip());assert used<1024,used
+for item in manifest['files']:
+ p=Path(item['target']);assert p.stat().st_size==item['bytes']
+ with p.open('rb') as f:assert hashlib.file_digest(f,'sha256').hexdigest()==item['sha256']
+source=Path('adapters/milk_bin');snapshot=run/'executed-adapters';snapshot.mkdir(exist_ok=False)
+for p in source.iterdir():
+ if p.is_file():(snapshot/p.name).write_bytes(p.read_bytes())
+PY
+export EVOWORLD_DSRL_DEADLINE="$(python -c 'import time;print(time.time()+14400)')"
+python - "$RUN" <<'PY'
+import json,os,time,sys
+from pathlib import Path
+(Path(sys.argv[1])/'started.json').write_text(json.dumps({'launcher_pid':os.getppid(),'host':'D46-6000x1','sft_step':20000,'budget_seconds':14400,'started_at':time.time(),'deadline':float(os.environ['EVOWORLD_DSRL_DEADLINE'])},indent=2))
+PY
+nvidia-smi --query-gpu=timestamp,memory.used,utilization.gpu --format=csv -l 5 > "$RUN/gpu-memory.csv" &
+monitor_pid=$!
+printf '%s\n' native_dsrl_training > "$RUN/stage.txt"
+timeout --signal=USR1 -k 30s 4h python -u adapters/milk_bin/dsrl_formal_entry.py --config-path "$ROOT/adapters/milk_bin" --config-name dsrl_formal > "$RUN/train.log" 2>&1
+printf '%s\n' completed > "$RUN/stage.txt"

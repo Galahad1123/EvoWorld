@@ -1,0 +1,11 @@
+--- a/requirements/install.sh
++++ b/requirements/install.sh
+@@ -1879,7 +1879,7 @@
+ }
+ 
+ setup_mirror() {
+-    remove_stale_github_mirror_rule
++    : # EvoWorld: preserve global Git configuration
+     if [ "$USE_MIRRORS" -eq 1 ]; then
+         export USE_MIRRORS
+         export GITHUB_PREFIX="${GITHUB_PREFIX:-https://gh-proxy.com/}"

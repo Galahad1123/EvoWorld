@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Dedicated D46 smoke. Never launches the four-hour RL experiment.
+set -euo pipefail
+ROOT=/path/to/EvoWorld
+RUN="$ROOT/experiments/phase8-milk-bin-20261108/dsrl-smoke"
+cd "$ROOT"
+mkdir -p "$RUN"
+trap 'code=$?; echo "$code" > "$RUN/exit-status.txt"; if [ -n "${monitor_pid:-}" ]; then kill "$monitor_pid" 2>/dev/null || true; fi' EXIT
+source adapters/rlinf/env.sh
+export PYTHONPATH="$ROOT/adapters/milk_bin:$PYTHONPATH" RLINF_EXT_MODULE=dsrl_extension
+export OPENPI_DATA_HOME=~/.cache/openpi
+export LD_LIBRARY_PATH="$ROOT/runtime/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}"
+unset EVOWORLD_MODEL_GPU_FRACTION HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
+export NO_PROXY=localhost,127.0.0.1
+export HYDRA_FULL_ERROR=1
+python - "$RUN" <<'PY'
+import sys,json,torch,platform
+from pathlib import Path
+assert torch.cuda.get_device_properties(0).total_memory>60*2**30,'Use the authorized idle96GB host; leave5090SFT alone'
+report={'python':platform.python_version(),'torch':torch.__version__,'gpu':torch.cuda.get_device_name(),'stage':'diagnostic_only','formal_rl_launched':False}
+(Path(sys.argv[1])/'runtime.json').write_text(json.dumps(report,indent=2));print(report,flush=True)
+PY
+nvidia-smi --query-gpu=timestamp,memory.used,utilization.gpu --format=csv -l 1 > "$RUN/gpu-memory.csv" &
+monitor_pid=$!
+printf '%s\n' native_rollout_and_update > "$RUN/stage.txt"
+timeout -k 60s 25m python -u adapters/milk_bin/dsrl_entry.py --config-path "$ROOT/adapters/milk_bin" --config-name dsrl_smoke > "$RUN/train.log" 2>&1
+CHECKPOINT="$RUN/native-dsrl-smoke/checkpoints/global_step_2"
+test -f "$CHECKPOINT/actor/evoworld-evidence.json"
+printf '%s\n' fresh_process_resume > "$RUN/stage.txt"
+timeout -k 60s 25m python -u adapters/milk_bin/dsrl_entry.py --config-path "$ROOT/adapters/milk_bin" --config-name dsrl_smoke runner.max_epochs=3 runner.resume_dir="$CHECKPOINT" > "$RUN/resume.log" 2>&1
+printf '%s\n' ready_for_evidence_review > "$RUN/stage.txt"
