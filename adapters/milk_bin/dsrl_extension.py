@@ -59,7 +59,7 @@ def register():
   import torch
   actions,result=predict(self,env_obs,mode=mode,**kwargs)
   noise=result['forward_inputs']['action']
-  assert actions.shape==(1,5,7) and noise.shape==(1,20,32),(actions.shape,noise.shape)
+  assert actions.shape==(1,self.action_chunk,7) and noise.shape==(1,20,32),(actions.shape,noise.shape)
   assert torch.isfinite(actions).all() and torch.isfinite(noise).all()
   assert env_obs['main_images'].shape==env_obs['wrist_images'].shape==(1,224,224,3)
   assert env_obs['states'].shape==(1,8)

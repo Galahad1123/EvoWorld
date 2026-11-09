@@ -34,5 +34,5 @@ def install_budget(Runner,deadline,clock=time.time,retention=2):
    self._finish_run()
    if retention is not None:
     path=Path(self.cfg.runner.logger.log_path)/'budget-complete.json'
-    path.write_text(json.dumps({'reason':'four_hour_budget','global_step':self.global_step,'finished_at':clock(),'deadline':deadline},indent=2))
+    path.write_text(json.dumps({'reason':'wall_time_budget','global_step':self.global_step,'finished_at':clock(),'deadline':deadline},indent=2))
  Runner.run=run;Runner._log_step_metrics=log;Runner._save_checkpoint=save
