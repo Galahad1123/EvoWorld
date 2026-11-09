@@ -25,3 +25,14 @@ Qwen weights are not required for the GPT-driven generation route. No private AP
 ## Current private scene package
 
 The deployment migration packages the accepted resources as `assets/evoworld/milk-bin-v1/` with `photo_scene/`, `box/`, `office/`, `fixture/`, relative `env_init.yaml`, and a 190-file SHA256 manifest. This package remains outside Git on each host. Its `env_init.yaml` uses paths relative to the package; the simulator adapter resolves them at launch. Current deployments therefore no longer obtain these scene assets from phase output directories. This is private project data, not a public downloadable benchmark.
+
+Example explicit source downloads (run only when resources are needed):
+
+```bash
+# GCS checkpoint directory; requires Google's gsutil, not an HTTP directory fetch.
+gsutil -m cp -r gs://openpi-assets/checkpoints/pi05_base /your/model/storage/
+# M2T2: pinned HF revision; HF_ENDPOINT can select hf-mirror.com.
+hf download wentao-yuan/m2t2 m2t2.pth --revision a20325dcd19cd1b838274974d0ebe35bfe383796 --local-dir /your/model/storage/m2t2
+```
+
+Do not download Qwen for the GPT authoring workflow. Mirror failures do not change the expected revision or checksum. Gated assets require authorization through their original provider; credentials stay on the machine.
