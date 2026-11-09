@@ -1,4 +1,4 @@
-# Relative paths are relative to THIS file. Never commit configs/local.yaml.
+# 相对路径基于本文件；切勿提交机器私有的 configs/local.yaml。
 storage_root: ../storage
 credentials_file: ~/.config/evoworld/credentials.env
 environments:
@@ -12,13 +12,14 @@ upstreams:
   sage: ../upstream/sage
   g1-realtosim: ../upstream/g1-realtosim
   IsaacLab-RLinf: ../upstream/IsaacLab-RLinf
+  nvdiffrast: ../upstream/nvdiffrast # 专家 CUDA 扩展构建必需；版本见上游清单。
 resources: {} # Exact task resource paths; see docs/RESOURCES.md.
 network:
   hf_endpoint: https://hf-mirror.com
   pip_index_url: https://pypi.tuna.tsinghua.edu.cn/simple
   gpt_base_url: https://api.openai.com/v1
   gpt_proxy: null
-# Optional for Isaac distributed as libraries rather than a standalone interpreter:
+# 仿真入口可选；使用 build_expert_extensions.py 共享 Isaac 库时必须显式填写：
 # isaac_experience: /path/to/isaacsim/apps/isaacsim.exp.base.python.kit
 # Observation definitions are experiment identity, not camera preference overrides.
 observation_contract: milk-bin-center-wrist-v1

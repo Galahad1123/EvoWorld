@@ -1,4 +1,4 @@
-# P6000 专家轨迹环境：配置与验收进度
+# P6000 专家轨迹环境：配置与验收结果
 
 [返回首页](../README.md)
 
@@ -23,11 +23,31 @@ GPT 照片建模在5090-1执行。P6000不连接 OpenAI、不保存 GPT 密钥�
 3. 精简 Isaac 安装没有源机器共享的绘图／coverage依赖：按源环境版本补齐。
 4. P6000 的 X11 等兼容库位于项目私有 runtime目录：通过 `runtime_library_dirs` 仅添加到当前仿真进程的动态库搜索路径。
 
-## 当前尚在进行
+## 端到端采集验收（2026-11-09）
 
-端到端燕麦奶任务采集验收：最多尝试3次，只保存1条成功示范，不启动SFT/RL训练。首次启动因上述依赖缺项退出；修复后的第二次运行已完成 Isaac 环境初始化并进入运动规划器创建阶段。
+修复依赖后的 `collection-02` 完整运行退出码为0；第1次抓取尝试生成1条成功示范，共398帧。上限为3次尝试、1条成功示范；没有启动SFT或RL训练。
 
-**在成功示范、HDF5内容与物理成功条件全部检查完成前，不宣称完整专家流水线已经通过验收。** 后续完成后更新本页。
+- 保留原版M2T2抓取候选、cuRobo规划和SAGE采集流程，使用已迁移的燕麦奶、收纳盒、照片桌面资产与office背景。
+- 独立离线重算任务成功条件通过：位于盒内、得到支撑、已释放、线速度稳定、角速度稳定；最后1秒共51个样本全部满足。最小水平余量约10.06毫米，最大支撑高度误差约0.00060毫米，最大线速度约0.00080米/秒。
+- HDF5动作与物理轨迹逐帧一致；两路RGB均为 `(398, 224, 224, 3)`、`uint8`，`next_obs`时序一致。数值字段检查通过；深度字段沿用原版uint8编码，不表示经过米制精度标定。
+- 指令停顿审计通过：6段至少0.3秒的静止区间，且释放前有完整0.3秒静止指令。该审计验证命令停顿，物理稳定性由上述任务判定单独验证。
+- 导出准确对应已保存示范的双相机视频，50fps、7.96秒。
+
+这是单条示范的链路验收，不是成功率统计，也不代表策略训练或RL适配验收。沿用 `milk-bin-center-wrist-v1` 观测契约；此前侧移7厘米的腕部相机仍是预览候选，本次没有静默更换旧数据／权重的相机契约。
+
+P6000项目目录下的验收产物：
+
+```text
+experiments/p6000-expert-20261109/
+  collection-02.log
+  collection-02/
+    collection-verification.json
+    dwell-audit.json
+    hdf5-audit.json
+    physical-acceptance.jsonl
+    expert-dual-camera.mp4
+    robomimic_data/Isaac-Lift-Single-Obj-Scene-Franka-IK-Abs-v0-vis-teaser/experts.hdf5
+```
 
 ## 可复现入口
 
@@ -40,6 +60,10 @@ runtime_library_dirs:
   - /your/project/runtime/usr/lib/x86_64-linux-gnu
 expert_cuda_arch: '12.0'
 expert_build_jobs: 4
+# 同时填写已有 Isaac 安装与固定版本 nvdiffrast 源码：
+isaac_experience: /your/isaacsim/apps/isaacsim.exp.base.python.kit
+upstreams:
+  nvdiffrast: /your/project/upstream/nvdiffrast
 ```
 
 先安装[环境说明](ENVIRONMENTS.md)中列出的独立环境与固定依赖，再构建扩展：
