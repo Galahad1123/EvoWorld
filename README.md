@@ -1,24 +1,47 @@
 # EvoWorld
 
-Research integration of GPT-assisted real-to-sim scene/asset generation, SAGE expert demonstrations, Isaac simulation, and RLinf SFT/RL.
+[English](README.en.md) · **中文为默认维护语言**
 
-## Portable setup
+EvoWorld 将 GPT 照片建模、SAGE 专家示范生成、Isaac 仿真和 RLinf 的 SFT／强化学习连接起来。当前任务是 Franka 单臂将燕麦奶放入收纳盒。
 
-1. Read [resource sources and downloads](docs/RESOURCES.md). Install the pinned component environments separately; do not install all their dependencies into this lightweight launcher environment.
-2. Install this launcher with `pip install -e .` (Python >=3.10).
-3. Copy `configs/local.example.yaml` to `configs/local.yaml`. Set interpreter paths, upstream checkout paths and resource mappings. Relative paths resolve against the YAML file's directory, not the shell working directory.
-4. Put `OPENAI_API_KEY=...` in `~/.config/evoworld/credentials.env` (mode 600), or supply it in the GPT process environment. Existing project `.env` may be referenced by `credentials_file`. Never commit credentials.
-5. Run `python -m evoworld doctor`. The report checks configured paths; missing entries and component execution readiness require the deployment audit described below.
-6. Inspect a command before execution, e.g. `python -m evoworld sft --dry-run`. `--config /path/to/machine.yaml` selects another machine profile. Arguments after `--` are forwarded to the underlying tool.
+## 先阅读这些文档
 
-Public experiment parameters live in task configs; machine config only locates dependencies and resources. GPT model and reasoning settings live in `configs/gpt.yaml`. Network configuration has separate GPT proxy and download mirror fields. Credentials are loaded only by `generate`.
+- [环境安装与源码准备](docs/ENVIRONMENTS.md)
+- [额外资源、下载地址与生成方式](docs/RESOURCES.md)
+- [迁移验收结果与适用边界](docs/ACCEPTANCE.md)
+- [P6000 专家环境配置与实时验收进度](docs/P6000_EXPERT.md)
 
-Commands: `generate`, `collect`, `convert`, `sft`, `rl`, `eval`. These dispatch the existing implementations, not replacements for their algorithms. Each real invocation creates a separate run record; dry-run starts no training, simulation, download or API call. The realtosim generate command requires its original run directory, round name and prompt arguments. Input photos remain external.
+代码仓库不包含模型权重、示范数据、真实照片、生成场景、虚拟环境或密钥。第三方源代码保留原有许可证，精确版本及补丁见 `manifests/upstreams.json`。
 
-## Migration status
+## 两台机器的分工
 
-The portable entrypoints are implemented and checked without starting training or policy evaluation. Historical adapter scripts and README files retain experimental context; fixed-host shell automation is archived as text under `docs/legacy-launchers`. Use the new launcher for current deployment. Environments, private assets and task checkpoints are external prerequisites: cloning this repository alone does not provide them. See [environment preparation](docs/ENVIRONMENTS.md) and [migration acceptance](docs/ACCEPTANCE.md). Existing experimental outputs are preserved externally.
+- **5090-1**：调用 GPT 完成照片建模、资产生成与修正；保留现有实验环境。
+- **P6000（D46-6000x1）**：使用已生成的场景进行专家轨迹采集、数据转换、SFT 和 RL。该机器不承担 GPT API 调用。
 
-The side70 wrist profile is a diagnostic candidate, not the observation contract used to train existing checkpoints. It is disabled by default until trajectory-level camera acceptance and regenerated training observations are ready.
+环境就绪、资源就绪与任务验收是三个不同状态。`doctor` 只报告前置依赖，不代表已经通过真实仿真或训练验收。
 
-Upstream versions and patches: `manifests/upstreams.json`. Third-party repositories retain their original licenses; no blanket license grant is made for their contents. Private resources and machine profiles are excluded from the repository.
+## 配置与运行
+
+1. 安装独立的组件环境；不要将 SAGE、Isaac、RLinf 的全部依赖混装到一个环境。
+2. 为轻量入口安装 Python 依赖：`pip install -e .`，要求 Python ≥3.10。
+3. 将 `configs/local.example.yaml` 复制为 `configs/local.yaml`，填写解释器、源码和资源位置。相对路径统一相对该 YAML 文件所在目录解析。
+4. 仅在需要 GPT 的机器上配置凭据：默认 `~/.config/evoworld/credentials.env`，内容为 `OPENAI_API_KEY=...`。建议权限为 `600`。也可用 `credentials_file` 指向现有 `.env`；不要提交真实凭据。
+5. 执行前置检查和 dry-run：
+
+```bash
+python -m evoworld doctor
+python -m evoworld sft --dry-run
+python -m evoworld --config /path/to/local.yaml sft --dry-run
+```
+
+入口包括 `generate`、`collect`、`convert`、`sft`、`rl`、`eval`。`--` 后的参数传给原始工具；`--output` 在分隔符前指定本次运行目录。dry-run 不启动下载、GPT 请求、仿真或训练。
+
+GPT 模型及推理档位位于 `configs/gpt.yaml`。机器配置负责代理和下载镜像。API 密钥只加载到 GPT 请求进程，不传入专家采集和训练进程。
+
+## 资源和实验版本
+
+任务通过逻辑资源名引用本地模型、资产与数据。更换相机、动作定义或归一化统计后，应更新对应实验契约，不要让旧权重静默使用新观测。
+
+`wrist-side70` 是侧移 7 cm 的预览配置，尚未默认替换历史训练数据使用的中央腕部相机。完整轨迹视野验收与重新采集不属于代码迁移验收。
+
+历史 adapter 文档保留原始实验记录；固定主机的自动启动脚本归档为文本，位于 `docs/legacy-launchers`。当前部署优先使用统一入口。代码更新不覆盖外部环境和实验结果。

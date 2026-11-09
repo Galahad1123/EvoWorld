@@ -16,6 +16,7 @@ def load(filename=None):
  c['paths']={k:path(c.get('paths',{}).get(k,str(Path(storage)/k)),base) for k in ('models','datasets','assets','runs','cache')}
  for group in ('environments','upstreams','resources'):
   c[group]={k:path(v,base) for k,v in c.get(group,{}).items()}
+ c['runtime_library_dirs']=[path(v,base) for v in c.get('runtime_library_dirs',[])]
  if c.get('isaac_experience'):c['isaac_experience']=path(c['isaac_experience'],base)
  c['credentials_file']=path(os.environ.get('EVOWORLD_CREDENTIALS_FILE',c.get('credentials_file','~/.config/evoworld/credentials.env')),base)
  return c

@@ -11,6 +11,8 @@ REQUIRED={
 def check(c):
  result={}
  for name,(envs,resources,modules) in REQUIRED.items():
+  if name in c.get('disabled_components',{}):
+   result[name]={'prerequisites_available':True,'disabled':True,'reason':c['disabled_components'][name],'execution_verified':False};continue
   missing=[f'environments.{k}' for k in envs if not Path(c['environments'].get(k,'/__missing__')).is_file()]
   missing += [f'resources.{k}' for k in resources if not Path(c['resources'].get(k,'/__missing__')).exists()]
   py=c['environments'].get(envs[0])

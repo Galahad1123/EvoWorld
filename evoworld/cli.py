@@ -18,12 +18,15 @@ def command(c,name,args):
  else:script=str(ROOT/script)
  return [python,'-u',script,*args]
 def main():
- p=argparse.ArgumentParser();p.add_argument('--config');p.add_argument('action',choices=['doctor',*COMMANDS]);p.add_argument('--dry-run',action='store_true');p.add_argument('--output')
+ p=argparse.ArgumentParser();p.add_argument('--config');p.add_argument('action',choices=['doctor',*COMMANDS]);p.add_argument('--dry-run',action='store_true');p.add_argument('--output');p.add_argument('--component',choices=list(COMMANDS))
  a,args=p.parse_known_args();args=args[1:] if args[:1]==['--'] else args
  c=load(a.config)
  if a.action=='doctor':
   from .doctor import check
-  report=check(c);print(json.dumps(report,indent=2));return int(any(not x['prerequisites_available'] for x in report.values()))
+  report=check(c)
+  if a.component:report={a.component:report[a.component]}
+  print(json.dumps(report,indent=2,ensure_ascii=False));return int(any(not x['prerequisites_available'] for x in report.values()))
+ if a.action in c.get('disabled_components',{}):raise ValueError(c['disabled_components'][a.action])
  if a.action in ('sft','rl') and not any(x.startswith('--config') for x in args):
   args=['--config-path',str(ROOT/'adapters/milk_bin'),'--config-name','sft' if a.action=='sft' else 'dsrl_formal',*args]
  # Resolve user paths before changing the subprocess working directory.
@@ -51,7 +54,8 @@ def main():
   if c['resources'].get(name):env[key]=c['resources'][name]
  env['EVOWORLD_RLINF']=c['upstreams'].get('RLinf','')
  if a.action in ('collect','eval','rl'):
-  from .runtime import isaac_experience
+  from .runtime import isaac_experience,runtime_environment
+  env=runtime_environment(c,env)
   env['EVOWORLD_ISAAC_EXPERIENCE']=isaac_experience(c)
   env['EVOWORLD_ISAAC_KIT_ARGS']='--/isaaclab/cameras_enabled=true'
   if c['resources'].get('isaac_assets'):env['EVOWORLD_SAGE_ASSET_ROOT']=c['resources']['isaac_assets']
@@ -59,6 +63,10 @@ def main():
    source=Path(c['resources']['expert_source'])
    extra=[str(source/'IsaacLab/source/extensions'/n) for n in ('omni.isaac.lab','omni.isaac.lab_assets','omni.isaac.lab_tasks')]
    env['PYTHONPATH']=os.pathsep.join(extra+[env['PYTHONPATH']])
+ if a.action=='collect':
+  from .expert import compiler_environment
+  env=compiler_environment(c,env)
+  env.update(EVOWORLD_SAGE_FRANKA_ONLY='1',EVOWORLD_TARGET_OBJECT='milk',EVOWORLD_PLACE_OBJECT='desk',EVOWORLD_TABLE_OBJECT='desk')
  env['PYTHONNOUSERSITE']='1'
  env['JAX_PLATFORMS']='cpu';env['XLA_PYTHON_CLIENT_PREALLOCATE']='false'
  env['EMBODIED_PATH']=str(Path(c['upstreams'].get('RLinf',''))/'examples/embodiment')

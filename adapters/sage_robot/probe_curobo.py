@@ -1,8 +1,13 @@
-"""Real cuRobo v1 Franka collision-aware motion planning on RTX5090."""
+"""Real cuRobo v1 Franka collision-aware motion planning on the configured CUDA device."""
 import json,tempfile,time,traceback
 from pathlib import Path
 import torch
-root=Path(__file__).resolve().parents[2];out=Path(tempfile.mkdtemp(prefix='sage-original-curobo-',dir=root/'experiments'));print(out,flush=True)
+from evoworld.config import load
+from evoworld.expert import compiler_environment
+import os
+config=load();os.environ.update(compiler_environment(config))
+run_root=Path(config['paths']['runs']);run_root.mkdir(parents=True,exist_ok=True)
+out=Path(tempfile.mkdtemp(prefix='sage-original-curobo-',dir=run_root));print(out,flush=True)
 t0=time.monotonic()
 try:
  from curobo.types.base import TensorDeviceType

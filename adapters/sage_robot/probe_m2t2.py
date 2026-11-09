@@ -3,9 +3,14 @@ import hashlib,json,sys,tempfile,time,traceback
 from pathlib import Path
 import numpy as np
 import torch
-root=Path(__file__).resolve().parents[2]
-sys.path.insert(0,str(root/'adapters/sage_robot/src/server'))
-out=Path(tempfile.mkdtemp(prefix='sage-original-m2t2-',dir=root/'experiments'));print(out,flush=True)
+from evoworld.config import load,resource
+from evoworld.expert import compiler_environment
+import os
+config=load();os.environ.update(compiler_environment(config))
+root=Path(config['storage_root']);source=resource('expert_source')
+run_root=Path(config['paths']['runs']);run_root.mkdir(parents=True,exist_ok=True)
+sys.path.insert(0,str(source/'server'))
+out=Path(tempfile.mkdtemp(prefix='sage-original-m2t2-',dir=run_root));print(out,flush=True)
 started=time.monotonic()
 try:
  from pointnet2_ops import pointnet2_utils as ops
@@ -19,7 +24,7 @@ try:
  from tex_utils import dict_to_floor_plan,export_layout_to_mesh_dict_list_tree_search_with_object_id
  from m2t2_utils.data import generate_m2t2_data
  from m2t2_utils.infer import load_m2t2,infer_m2t2
- layout_path=root/'adapters/sage_robot/src/server/results/layout_evoworld_30dd907ee170/layout_evoworld_30dd907ee170.json'
+ layout_path=source/'server/results/layout_evoworld_30dd907ee170/layout_evoworld_30dd907ee170.json'
  layout=dict_to_floor_plan(json.loads(layout_path.read_text()))
  target='room_evoworld_30dd907ee170_mug'
  meshes=export_layout_to_mesh_dict_list_tree_search_with_object_id(layout,target)
@@ -30,7 +35,7 @@ try:
  np.savez_compressed(out/'grasps.npz',grasps=grasps,contacts=contacts)
  assert len(grasps)>0 and grasps.shape[1:]==(4,4) and np.isfinite(grasps).all()
  result={'passed':True,'target':target,'grasps':len(grasps),'shape':list(grasps.shape),'wall_seconds':time.monotonic()-started,
-         'checkpoint_sha256':hashlib.sha256((root/'assets/m2t2/m2t2.pth').read_bytes()).hexdigest(),
+         'checkpoint_sha256':hashlib.sha256(resource('m2t2').read_bytes()).hexdigest(),
          'model_runs':cfg.eval.num_runs,'torch':torch.__version__,'peak_cuda_allocated_mib':torch.cuda.max_memory_allocated()/1024**2}
  (out/'report.json').write_text(json.dumps(result,indent=2));print('SAGE_M2T2_PASS '+json.dumps(result),flush=True)
 except BaseException:

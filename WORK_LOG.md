@@ -1,15 +1,25 @@
-# Portable runtime implementation ledger
-Authorized: full portable-code migration to Galahad1123/EvoWorld; public repository; download links required. No new training or policy evaluation.
-Isolation: fresh clone, feat/portable-runtime. Preserve existing installations and historical data.
-Completed: copied self-authored adapters/scripts and existing patches, excluded third-party source and caches. Stopped P6000 SFT watcher and its already-started resume Ray session; GPU now empty. Base weights transferred.
-Pending: configuration/runtime, resources, upstream audit/patch capture, portable entrypoints, tests, deployment, fresh review, public audit/push.
-Ruling: public code excludes raw photos, generated assets, API transcripts and historical logs. Existing resources remain external.
+# 开发记录（中文优先）
 
-Implementation progress: config and credential loader, CLI/doctor, external resource resolver, current GPT/milk-bin/SFT/DSRL entrypoint migration. Read-only diagnostic caught interpreter symlink resolution bypassing venv; fixed with regression test. D46 Isaac installation is library-only; added explicit experience override. Current scene resources copied into stable assets/evoworld/milk-bin-v1 (190 checksummed files) on both hosts; old files retained. Main sim adapter resolves relative environment-template paths.
-Fresh review found RL budget bypass, explicit-config mismatch, relative arguments, empty-config doctor, missing contracts. Fixed by bounded gated RL wrapper, passing config, argument normalization, required capability diagnostics, checksum/contract enforcement. Historical fixed-host shell automation moved to text archive. No training/evaluation started by migration.
-Tests: 9 lightweight tests passed before final regression additions. 5090 prerequisites: expert/conversion/SFT available; GPT profile corrected to sage. D46: conversion/SFT available; expert environment/M2T2 and GPT environment absent. Formal checkpoint intentionally not selected because evaluations remain cancelled.
-Remaining before release acceptance: verify all entrypoint transitive paths, complete upstream installer/patch reproducibility and public-file audit, enforce full resource/task snapshot contracts, verify scene USD references and model/data read-only load, dry-run all components on both hosts, commit/deploy same revision and publish only after those checks. Do not describe this branch as complete or end-to-end accepted.
+[历史完整记录](WORK_LOG.en.md)。本文件记录当前进行中的工作；具体结果以验收文档和运行报告为准。
 
-Later verification supersedes earlier pending notes: fixed all ten absolute USD asset references and independently verified zero missing/absolute refs; synchronized new private fixture and manifest to both hosts. Real D46 official data batch read passed. Hydra SFT composition and actual13GB weight hash passed. Preserved untracked installer edits as rlinf-installer.patch. Expert patch reverse-apply check passed. Added pinned source preparation dry-run/explicit execution tool, environment/download instructions and acceptance limits. Ten core tests and compilation passed. No full GPU environment reconstruction or training/policy evaluation is claimed.
+## 代码迁移
 
-Final bounded checks: D46 pytest selected core + original budget/cleanup/handoff tests:16 passed,11 subtests passed. Complete Python compilation passed. Staged file scan:265 files, no secret-pattern findings, no private local config/data/weight files. Public push dry-run authorized for Galahad1123/EvoWorld main. Deployment uses new Git checkouts; initial rsync audit folders are not production deployments. Fresh GPU environment installation, policy evaluation, training and camera-data regeneration remain intentionally outside this migration acceptance.
+已发布可迁移入口、机器配置、凭据隔离、资源校验、上游版本及补丁。两机使用Git管理代码，场景资产保留在外部稳定目录。迁移检查不包含重新训练或策略评测。
+
+## P6000 专家环境（进行中）
+
+用户要求GPT仅在5090运行；P6000补齐原版SAGE专家环境、M2T2权重，并继续保留现有RLinf环境。
+
+- 独立专家环境与固定版本依赖已安装；M2T2权重SHA核对通过。
+- PointNet++、M2T2、cuRobo和nvdiffrast已编译；CUDA算子、真实渲染抓取候选与碰撞规划分别通过。
+- 修复了环境内CUDA链接名、源码SCM版本、共享Isaac Python依赖及进程级动态库搜索路径。
+- 当前完整采集验收最多3次尝试、1条成功示范；未启动SFT/RL。
+- 采集首轮在Isaac启动因依赖缺项退出；第二轮已进入规划器创建。待检查HDF5、相机、动作、行为停顿与物理成功条件后方可验收。
+
+## 文档
+
+根README、核心安装/下载/验收文档默认中文，提供英文副本；13个模块提供中文维护指南，并保留英文原始实验详记。新增P6000专家环境进度页。
+
+## 检查与后续
+
+当前14项轻量测试通过。剩余：完整采集验收、必要兼容性修复、结果归档、最终代码审查和提交同步。不要把单个组件通过解释为整条流水线通过。

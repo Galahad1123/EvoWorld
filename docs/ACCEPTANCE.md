@@ -1,16 +1,31 @@
-# Migration acceptance and limits
+# 迁移验收结果与适用边界
 
-Checks performed without GPT requests, policy evaluation, SFT updates or RL iterations:
+[English](ACCEPTANCE.en.md) · [返回首页](../README.md)
 
-- Ten lightweight tests: config relocation, relative overrides, credential precedence without shell evaluation, preservation of venv interpreter symlinks, explicit Isaac experience selection, empty-config rejection, camera contract mismatch, corrupt resource rejection, dispatch construction and missing baseline rejection.
-- Python compilation of the new runtime and current milk-bin / realtosim_photo adapters.
-- Real pinned RLinf Hydra config composition: global/micro batch 4, 20,000 steps, explicit learning-rate floor ratio 0.1.
-- Actual converted base model SHA256 verified: `f6391204c480d6c54d31d63601e7963ef23301157df052a4b8183e7b019ce2f1`.
-- D46 official OpenPI data loader read a real batch of four demonstrations; no gradients or optimizer steps.
-- Expert source patch reverse-apply check passed against existing adapted source.
-- Current private scene package: 190 files; ten USD layers rebased from absolute texture paths. USD inspection found zero missing dependencies and zero remaining absolute asset references. Updated assets/manifests copied to both hosts.
-- Read-only capability probes distinguish prerequisite availability from runtime verification. The source host has the expert/SFT/conversion environments; its GPT authoring uses the SAGE Python, not the minimal USD environment. D46 lacks the GPT/expert environments and M2T2 weights, while SFT/conversion prerequisites exist. No formal checkpoint is selected automatically.
+以下是首版代码迁移的验收记录；不代表重新执行了 GPT 建模、策略评测或正式训练。
 
-Fresh code review identified explicit-machine-config, relative-argument, empty-doctor and RL-budget regressions; fixes are in this branch. Formal RL uses the original baseline competence gate, checkpoint hash matching, single-run lock, four-hour deadline and exact-marker subprocess cleanup. Existing 15% baseline does not meet the gate; migration does not authorize bypassing it.
+## 已验证内容
 
-Limits: no new simulation rendering, expert collection, GPT generation, SFT training or policy success evaluation was performed for this migration. The side70 camera is preview-only and must not be paired silently with existing center-camera data. Environment reconstruction instructions preserve pinned sources and patches, but installing fresh GPU extensions is hardware-dependent and has not been rerun from scratch on D46. Custom photo-derived scenes/datasets do not have a public download URL; their absence is explicit, not an automatic fallback to another scene.
+- 配置加载、相对路径、虚拟环境解释器符号链接、凭据优先级、显式 Isaac experience、空配置拒绝、相机契约不匹配、资源哈希错误、命令构造与缺失基线拒绝等10项轻量测试通过。
+- P6000 上合并运行核心测试及原有 RL 预算、清理、基线门槛测试，共16项测试、11项子测试通过。
+- 新运行入口与当前 milk-bin／realtosim_photo 代码编译检查通过。
+- 使用固定版本 RLinf 解析实际 Hydra 配置：global batch=4、micro batch=4、总步数20000、学习率下限比例0.1。
+- 已核对转换后的基础权重 SHA256，详见[资源说明](RESOURCES.md)。
+- P6000 的官方 OpenPI 数据加载器成功读取真实 batch=4，没有计算梯度或执行优化器更新。
+- 专家源码补丁对现有运行源码执行反向 apply 检查通过。
+- 私有场景包包含190个文件；修复10个 USD 文件中的绝对纹理引用后，检查结果为零缺失引用、零绝对资产引用。两台机器已同步资产及校验清单。
+
+## 审查中修复的问题
+
+统一入口保留了配置选择、相对参数路径和虚拟环境解释器语义。正式 RL 保留原基线能力门槛、检查点哈希匹配、单任务锁、4小时时限以及按运行标识清理子进程的机制。
+
+原有15%基线不满足已约定的能力门槛，迁移没有授权绕过它。评测取消后，入口也不会自动选择模型检查点启动 RL。
+
+## 边界
+
+- `doctor` 的前置依赖通过不等于仿真、专家采集或训练验收通过。
+- 首版迁移没有重新进行仿真渲染、专家采集、GPT生成、SFT训练或策略成功率评测。
+- `side70` 腕部相机仍是单姿态预览候选，不能静默配合旧中央视角数据与权重。
+- 自定义照片场景与示范数据没有公共下载地址，缺失时明确报错，不自动换用其他场景。
+- 初次迁移时 P6000 尚缺 GPT／专家环境及 M2T2 权重；后续配置按机器分工推进。GPT 始终由5090负责，专家环境的新验收以专门报告为准。
+- 全新硬件上的 CUDA 扩展需要重新编译和验证，不能仅凭源码版本一致就宣称兼容。
