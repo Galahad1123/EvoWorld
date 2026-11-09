@@ -22,7 +22,7 @@ network:
 # 仿真入口可选；使用 build_expert_extensions.py 共享 Isaac 库时必须显式填写：
 # isaac_experience: /path/to/isaacsim/apps/isaacsim.exp.base.python.kit
 # Observation definitions are experiment identity, not camera preference overrides.
-observation_contract: milk-bin-center-wrist-v1
+observation_contract: milk-bin-side70-v1
 resource_checks: {}
 # Each training dataset/checkpoint must declare its observation_contract under
 # resource_checks; add sha256 mappings for model/resource integrity verification.

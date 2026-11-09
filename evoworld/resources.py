@@ -29,3 +29,5 @@ def compatibility(c,action):
  for name in required:
   found=c.get('resource_checks',{}).get(name,{}).get('observation_contract')
   if found!=expected:raise ValueError(f'Observation/action contract mismatch or missing: {name}')
+  from .observations import CONTRACT,verify_artifact
+  if expected==CONTRACT:verify_artifact(c['resources'][name],name)

@@ -1,5 +1,5 @@
 {
-  "version": "wrist-side70-preview-v1",
+  "version": "wrist-side70-v1",
   "position_hand_m": [
     0.07,
     0,
@@ -11,6 +11,7 @@
     0,
     0.9799443305298665
   ],
-  "status": "single-pose-preview-only",
-  "default_enabled": false
+  "status": "production-default",
+  "default_enabled": true,
+  "observation_contract": "milk-bin-side70-v1"
 }

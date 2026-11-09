@@ -12,7 +12,8 @@ with torch.device('meta'):model=Pi0(Pi0Config(pi05=True,action_horizon=20,discre
 freeze_sft_vlm(model)
 saved=torch.load(Path(a.checkpoint)/'model_state_dict/full_weights.pt',map_location='cpu',weights_only=True,mmap=True)
 frozen=0;changed=[]
-with safe_open(ROOT/'models/pi05-base-openpi/model.safetensors',framework='pt',device='cpu') as source:
+from evoworld.config import resource
+with safe_open(resource('base_model')/'model.safetensors',framework='pt',device='cpu') as source:
  for name,param in model.named_parameters():
   reference=source.get_tensor(name).to(saved[name].dtype)
   assert torch.isfinite(saved[name]).all(),name

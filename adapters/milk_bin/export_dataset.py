@@ -21,6 +21,9 @@ def export(run,out,count,split):
  run=Path(run).resolve();out=Path(out).resolve()
  if out.exists():raise FileExistsError(out)
  verification=json.loads((run/'collection-verification.json').read_text());assert verification['passed'] and verification['count']==count
+ from evoworld.observations import CONTRACT
+ scene=json.loads((run/'scene-profile.json').read_text())
+ if scene.get('observation_contract')!=CONTRACT:raise ValueError('Collection is not the approved side70 contract')
  source=next(run.glob('robomimic_data/*/experts.hdf5'))
  mapping=[json.loads(x) for x in (run/'demo-attempts.jsonl').read_text().splitlines()]
  accepted={r['attempt']:r for r in map(json.loads,(run/'physical-acceptance.jsonl').read_text().splitlines())}
@@ -69,7 +72,7 @@ def export(run,out,count,split):
   assert tuple(row['observation.images.front'].shape)==(3,224,224)
   offset+=record['frames']
  assert len(loaded)==offset
- report={'complete':True,'source_hdf5':str(source),'source_sha256':file_hash(source),'split':split,'episodes':episodes,'frames':offset,'fps':fps,'action_contract':'robot-base metres + spatial rotation vector radians; +1 open/-1 close','state_contract':'7 measured arm joints, sum of measured finger positions','camera_encoding':'lossless PNG','reader_verified':True,'normalization':'this training split only' if split=='train' else 'none; use training stats'}
+ report={'observation_contract':CONTRACT,'wrist_camera':scene['office']['wrist_camera'],'complete':True,'source_hdf5':str(source),'source_sha256':file_hash(source),'split':split,'episodes':episodes,'frames':offset,'fps':fps,'action_contract':'robot-base metres + spatial rotation vector radians; +1 open/-1 close','state_contract':'7 measured arm joints, sum of measured finger positions','camera_encoding':'lossless PNG','reader_verified':True,'normalization':'this training split only' if split=='train' else 'none; use training stats'}
  (out/'source-manifest.json').write_text(json.dumps(report,indent=2));return report
 
 if __name__=='__main__':

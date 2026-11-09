@@ -24,6 +24,8 @@ def configure(cfg,seed):
  photo.configure(cfg,seed)
  selected=json.loads((ROOT/'configs/selected-office.json').read_text())
  SETTINGS=office.configure(cfg,resource('office_background'),ROOT/selected['tabletop_camera_profile'])
+ from evoworld.observations import apply_wrist
+ SETTINGS['wrist_camera']=apply_wrist(cfg.scene.camera_wrist)
  for name in ['camera_tabletop','camera_wrist']:
   cam=getattr(cfg.scene,name);cam.width=224;cam.height=224
  return cfg
@@ -31,7 +33,7 @@ def configure(cfg,seed):
 def attach(env):
  global ENV
  ENV=env;photo.attach(env);office.attach(env,SETTINGS)
- p=Path('scene-profile.json');d=json.loads(p.read_text());d.update(task='milk_in_storage_box',box={'position':BOX_POS.tolist(),'inner_xy':BOX_INNER,'floor_local_z':FLOOR},step_dt=env.step_dt,office=SETTINGS);p.write_text(json.dumps(d,indent=2))
+ p=Path('scene-profile.json');d=json.loads(p.read_text());d.update(task='milk_in_storage_box',box={'position':BOX_POS.tolist(),'inner_xy':BOX_INNER,'floor_local_z':FLOOR},step_dt=env.step_dt,office=SETTINGS,observation_contract=SETTINGS['wrist_camera']['observation_contract']);p.write_text(json.dumps(d,indent=2))
 
 def randomize(transforms):
  from scipy.spatial.transform import Rotation
