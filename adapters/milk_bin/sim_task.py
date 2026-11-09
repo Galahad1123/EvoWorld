@@ -4,7 +4,8 @@ ROOT=Path(__file__).resolve().parents[2]
 from evoworld.config import resource
 from evoworld.runtime import isaac_experience
 
-def create_task(seed=710,output=None):
+def create_task(seed=710,output=None,max_episode_steps=650):
+ if not isinstance(max_episode_steps,int) or max_episode_steps<=0:raise ValueError("Positive integer max_episode_steps required")
  import os,sys
  for package in ['omni.isaac.lab','omni.isaac.lab_assets','omni.isaac.lab_tasks']:
   sys.path.insert(0,str(resource('expert_source')/'IsaacLab/source/extensions'/package))
@@ -37,15 +38,16 @@ def create_task(seed=710,output=None):
  milk.photo.attach(env)
  profile=milk.SETTINGS['tabletop_camera']
  env.scene['camera_tabletop'].set_world_poses_from_view(torch.tensor([profile['position_world_m']],device=env.device),torch.tensor([profile['target_world_m']],device=env.device))
- return MilkBinTask(env,seed),app
+ return MilkBinTask(env,seed,max_episode_steps=max_episode_steps),app
 
 class MilkBinTask:
- def __init__(self,env,seed):
+ def __init__(self,env,seed,max_episode_steps=650):
   import numpy as np
   from collections import deque
   from pxr import Usd
   from collision_bridge import collect_colliders
   import milk_runtime as milk
+  self.max_episode_steps=max_episode_steps
   self.env=env;self.device=env.device;self.rng=np.random.default_rng(seed)
   self.roots=deque(maxlen=51);self.fingers=deque(maxlen=51);self.gripper_commands=deque(maxlen=51);self.done=False;self.steps=0
   self.vertices,_,_=collect_colliders(Usd.Stage.Open(str(milk.BUNDLE/milk.photo.lookup['milk']['asset'])),'/Asset',True)
@@ -105,7 +107,7 @@ class MilkBinTask:
   self.roots.append(root);self.fingers.append(milk.old.cpu(self.env.scene['robot'].data.joint_pos[0,-2:]).copy())
   result=check_window(self.roots,self.fingers,self.vertices,milk.BOX_POS,milk.BOX_INNER,milk.FLOOR,self.env.step_dt,gripper_commands=self.gripper_commands)
   success=result['success'];failed=not np.isfinite(root).all() or root[2]<milk.BOX_POS[2]-.1
-  timeout=self.steps>=650;self.done=success or failed or timeout;self.last_success=success
+  timeout=self.steps>=self.max_episode_steps;self.done=success or failed or timeout;self.last_success=success
   reward=1.0-.001 if success else -.001
   return self._obs(),self._tensor([reward]),torch.tensor([success],device=self.device),torch.tensor([failed or timeout],device=self.device),{'physical_acceptance':result}
 

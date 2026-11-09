@@ -42,13 +42,13 @@ if __name__=='__main__':
      for j in range(min(5,a.horizon-steps)):
       if writer:writer.append_data(np.concatenate([obs['main_images'][0].cpu().numpy(),obs['wrist_images'][0].cpu().numpy()],axis=1))
       action=actions[:,j];obs,reward,term,trunc,info=env.step(action,auto_reset=False);steps+=1
-      records.append({'step':steps,'action':action[0].cpu().tolist(),'reward':float(reward[0]),'terminated':bool(term[0]),'truncated':bool(trunc[0])})
+      records.append({'step':steps,'action':action[0].cpu().tolist(),'reward':float(reward[0]),'terminated':bool(term[0]),'truncated':bool(trunc[0]),'physical_acceptance':info.get('physical_acceptance')})
       if term.any() or trunc.any():
        success=bool(term[0]);done=True;break
      if done:break
    finally:
     if writer:writer.close()
-   result={'episode':ep,'seed':seed,'success':success,'steps':steps,'mean_chunk_latency_s':float(np.mean(latencies)),'chunks':len(latencies)}
+   result={'episode':ep,'seed':seed,'success':success,'steps':steps,'mean_chunk_latency_s':float(np.mean(latencies)),'chunks':len(latencies),'final_physical_acceptance':records[-1].get('physical_acceptance') if records else None}
    (out/f'episode-{ep:03}-trace.json').write_text(json.dumps(records))
    results.append(result);(out/'progress.json').write_text(json.dumps(results,indent=2));print(json.dumps(result),flush=True)
  finally:

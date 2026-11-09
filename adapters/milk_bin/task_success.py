@@ -30,4 +30,5 @@ def check_window(roots,fingers,vertices,box_xyz,inner_xy,floor_local_z,dt,*,grip
          'stable_angular':bool(np.linalg.norm(roots[:,10:13],axis=1).max()<.2)}
  return {'success':all(checks.values()),'checks':checks,'samples':needed,
          'xy_margin_m':float(xy_margin.min()),'max_support_error_m':float(np.abs(support_error).max()),
-         'max_speed_m_s':float(np.linalg.norm(roots[:,7:10],axis=1).max())}
+         'max_speed_m_s':float(np.linalg.norm(roots[:,7:10],axis=1).max()),
+         'max_angular_speed_rad_s':float(np.linalg.norm(roots[:,10:13],axis=1).max())}
