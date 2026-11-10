@@ -1,7 +1,7 @@
 {
   "RLinf": {
     "url": "https://github.com/Galahad1123/RLinf.git",
-    "commit": "9c9760397e0026a6341e9e6bc33c4c9749ea0195",
+    "commit": "bf25075e42755c181482239b80df474bd0c567ba",
     "submodule": "third_party/RLinf",
     "upstream_url": "https://github.com/RLinf/RLinf.git",
     "upstream_commit": "1bf78980d9339cbc67497eddceb9a1e3a74e2acc"
