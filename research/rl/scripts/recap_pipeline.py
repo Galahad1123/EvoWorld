@@ -98,6 +98,9 @@ def main():
                      '--value-steps', a.value_steps, '--cfg-steps', a.cfg_steps,
                      '--deadline-unix', budget['training_deadline_unix']], 'prepare')
         stage('returns')
+        execute([py, scripts/'recap_video_cache.py', '--source', root/'storage/datasets/recap-libero-task0',
+                 '--dest', root/'storage/cache/recap-libero-task0-gop8', '--workers', 16,
+                 '--activate-run', out], 'video-cache')
         stage('value')
         value_checkpoint = completed_checkpoint(out/'value')
         # The value deadline can shorten training; advantages must use the actual saved model.

@@ -50,3 +50,11 @@ python research/rl/scripts/recap_pipeline.py --root /root/autodl-tmp/EvoWorld --
 RLinf fork 的可选 `runner.deadline_unix` 在更新边界触发最终保存，`runner.write_training_status` 输出实际步数和耗时。训练截止设为总截止前30分钟。每次保存完成后原子写入 `checkpoint_complete.json` 标记；pipeline和恢复入口只接受有完成标记、大小匹配的模型+DCP检查点，结果明确标记 `budget_limited`，不会把提前结束写成10000步。极端GPU或文件系统阻塞可能延误安全保存；截止保护不是实时系统保证。
 
 可用命令：`python research/rl/scripts/recap_pipeline.py --root /root/autodl-tmp/EvoWorld --budget-hours 15 --resume`。仍保留已有初始策略50回合复测，以匹配CFG推理封装。
+
+## 完整视频数据的随机读取优化
+
+2026-11-10首次完整数据运行暴露解码瓶颈：2个数据worker下，batch32交替出现约21秒等待和0.75秒更新，价值训练可能超过20小时。公开rollout使用无损长GOP视频，随机取一帧需要先解码多个前序帧；SFT嵌入图像的小测试未覆盖该成本。
+
+正式流水线在价值训练前构建 `storage/cache/recap-libero-task0-gop8`。使用libx264rgb、QP0、GOP8，逐文件比较全部RGB帧的MD5、帧时间戳与时间基，全部一致才启用缓存。原始数据不修改，仅切换本次实验data视图中的videos软链接。每个输出另存SHA256，恢复时复核。预留180GiB用于检查点，缓存生成也计入原来的15小时截止时间。
+
+价值训练/验证、优势标注、策略训练的数据worker均为8。学习目标、样本权重、回报/优势、batch、目标步数保持不变。最初慢速尝试保存在 `provenance/attempts/slow-video-loader`；此次只有早期更新且未产生检查点，优化后从原初始化重启，不重置总时间预算。
