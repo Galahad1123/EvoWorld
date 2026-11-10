@@ -25,7 +25,7 @@ def main():
  if a.stage=='advantages':cmd=[str(py),'-m','torch.distributed.run','--standalone','--nproc_per_node=1',*cmd[1:]]
  info={'command':cmd,'started':time.time(),'pid':os.getpid(),'evoworld_commit':subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip(),'rlinf_commit':subprocess.check_output(['git','-C',str(src),'rev-parse','HEAD'],text=True).strip()};record.write_text(json.dumps(info,indent=2))
  with (out/'logs'/f'{a.stage}.log').open('a') as f:
-  code=subprocess.call(cmd,env=env,cwd=out,stdout=f,stderr=subprocess.STDOUT)
+  code=subprocess.call(cmd,env=env,cwd=out/'logs',stdout=f,stderr=subprocess.STDOUT)
  info.update(exit_code=code,finished=time.time());record.write_text(json.dumps(info,indent=2));print(json.dumps(info),flush=True)
  raise SystemExit(code)
 if __name__=='__main__':main()
