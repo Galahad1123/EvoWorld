@@ -36,3 +36,7 @@ python research/rl/scripts/eval_libero.py --config configs/local.yaml --run-id m
 确认路径后依次执行 `env`、`smoke`、`full`，前两阶段 `--num-envs 2`，正式阶段 `--num-envs 25`。本轮迁移不执行这些仿真命令。正式结果不可覆盖；新的运行必须使用新 ID。已有 500 回合基线报告见 `reports/libero-pi05-20k-20261110.md`。
 
 正式 RL 训练后续使用 RLinf 原生入口；此独立推理脚本不代表完整训练链路已验收。
+
+## RECAP Task 0
+
+[实验配方、资源来源和运行状态约定](RECAP.md)。正式运行是否完成以对应 outputs 目录的 pipeline-status.json 为准。
