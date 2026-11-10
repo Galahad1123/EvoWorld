@@ -9,8 +9,8 @@ value_global_batch: 32
 value_validation: all_64_episodes_every_1000_updates
 cfg_steps: 10000
 cfg_micro_batch: 4
-cfg_global_batch: 4
-cfg_warmup_steps: 1000
+cfg_global_batch: 16
+cfg_warmup_steps: 1500
 save_interval: 3000
 independent_eval:
   episodes: 50
@@ -20,3 +20,9 @@ independent_eval:
   baseline_guidance: no_guide
   final_guidance: positive
   guidance_scale: 1.0
+
+budget_hours: 15
+budget_starts: after_verified_resources
+calibration_steps: 100
+calibration_discard_steps: 20
+reserve_save_eval_minutes: 30

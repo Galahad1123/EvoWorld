@@ -1,6 +1,7 @@
 """Run one native RECAP stage with explicit environment, provenance and logs."""
 import argparse,json,os,subprocess,time
 from pathlib import Path
+from recap_budget import checkpoint_is_complete
 ENTRIES={'returns':'examples/offline_rl/advantage_labeling/recap/process/compute_returns.py','value':'examples/offline_rl/advantage_labeling/recap/train_value.py','advantages':'examples/offline_rl/advantage_labeling/recap/process/compute_advantages.py','cfg':'examples/offline_rl/policy_optimization/cfg_rl/train_cfg.py'}
 def main():
  p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--run',type=Path,required=True);p.add_argument('--stage',choices=ENTRIES,required=True);p.add_argument('--resume',action='store_true');a=p.parse_args()
@@ -19,7 +20,7 @@ def main():
  env['LD_LIBRARY_PATH']=os.pathsep.join([str(libs),str(libs/'pulseaudio'),str(root/'storage/runtime/usr/lib/x86_64-linux-gnu'),env.get('LD_LIBRARY_PATH','')])
  cmd=[str(py),str(src/ENTRIES[a.stage]),'--config-path',str(out/'config'),'--config-name',a.stage]
  if a.resume and a.stage in ('value','cfg'):
-  checkpoints=[x for x in (out/a.stage/'checkpoints').glob('global_step_*') if (x/'actor/dcp_checkpoint/.metadata').is_file() and (x/'actor/model_state_dict/full_weights.pt').is_file()]
+  checkpoints=[x for x in (out/a.stage/'checkpoints').glob('global_step_*') if checkpoint_is_complete(x/'actor')]
   if checkpoints:
    latest=max(checkpoints,key=lambda x:int(x.name.split('_')[-1]));cmd.append(f'++runner.resume_dir={latest}')
  if a.stage=='advantages':cmd=[str(py),'-m','torch.distributed.run','--standalone','--nproc_per_node=1',*cmd[1:]]

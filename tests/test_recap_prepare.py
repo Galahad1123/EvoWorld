@@ -47,3 +47,25 @@ class RecapResumeTests(unittest.TestCase):
    (out/'provenance/recipe.json').write_text('{"value_steps":8000,"cfg_steps":10000}')
    result=subprocess.run([sys.executable,str(ROOT/'research/rl/scripts/recap_pipeline.py'),'--root',d,'--resume','--cfg-steps','30000'],capture_output=True,text=True)
    self.assertNotEqual(result.returncode,0);self.assertIn('budget differs',result.stderr)
+
+class RecapFullBudgetConfigTests(unittest.TestCase):
+ def test_full_budget_uses_native_accumulation(self):
+  import yaml
+  with tempfile.TemporaryDirectory() as d:
+   r=Path(d);(r/'third_party').mkdir();(r/'third_party/RLinf').symlink_to(ROOT/'third_party/RLinf',target_is_directory=True)
+   raw=r/'storage/datasets/recap-libero-task0'
+   for split in ['sft','train','eval']:
+    p=raw/f'libero10_task0_{split}'
+    for folder in ['meta','data','videos']:(p/folder).mkdir(parents=True)
+    (p/'meta/info.json').write_text('{}')
+   (raw/'verified.json').write_text('{}')
+   cmd=[sys.executable,str(ROOT/'research/rl/scripts/recap_prepare.py'),'--root',d,'--mode','full','--deadline-unix','123456']
+   result=subprocess.run(cmd,capture_output=True,text=True)
+   self.assertEqual(result.returncode,0,result.stderr)
+   out=r/'research/rl/outputs/runs/libero/recap/pi05-20k-task0-20261110'
+   cfg=yaml.safe_load((out/'config/cfg.yaml').read_text())
+   self.assertEqual(cfg['actor']['global_batch_size'],16)
+   self.assertEqual(cfg['actor']['micro_batch_size'],4)
+   self.assertEqual(cfg['actor']['optim']['lr_warmup_steps'],1500)
+   self.assertEqual(cfg['runner']['deadline_unix'],123456)
+   self.assertTrue(cfg['runner']['write_training_status'])

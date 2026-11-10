@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--mode',choices=['smoke','full'],required=True);p.add_argument('--value-steps',type=int,default=8000);p.add_argument('--cfg-steps',type=int,default=10000);a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--mode',choices=['smoke','full'],required=True);p.add_argument('--value-steps',type=int,default=8000);p.add_argument('--cfg-steps',type=int,default=10000);p.add_argument("--deadline-unix",type=float);a=p.parse_args()
  root=a.root;source=root/'third_party/RLinf';storage=root/'storage';raw=storage/'datasets/recap-libero-task0'
  out=root/'research/rl/outputs'/('scratch/recap-20261110/smoke' if a.mode=='smoke' else 'runs/libero/recap/pi05-20k-task0-20261110')
  if (out/'provenance/recipe.json').exists():raise FileExistsError('Prepared run already exists; refusing configuration overwrite')
@@ -31,6 +31,7 @@ def main():
   (out/'config'/(name+'.yaml')).write_text(yaml.safe_dump(c,sort_keys=False))
  returns=read('recap_compute_returns');returns['data'].update(train_data_paths=paths+([{'dataset_path':datasets['eval'],'type':'rollout'}] if a.mode=='full' else []),tag=tag,num_workers=8);write('returns',returns)
  value=read('recap_value_model_sft');value['runner'].update(max_epochs=-1,max_steps=4 if a.mode=='smoke' else a.value_steps,val_check_interval=2 if a.mode=='smoke' else 1000,save_interval=4 if a.mode=='smoke' else 3000)
+ value['runner'].update(deadline_unix=a.deadline_unix,write_training_status=True)
  value['runner']['logger'].update(log_path=str(out),experiment_name='value',logger_backends=['tensorboard'])
  value['data'].update(tag=tag,train_num_workers=2,eval_num_workers=2,prefetch_factor=2,train_data_paths=[dict(x,robot_type='libero',model_type='pi05') for x in paths],eval_data_paths=[{'dataset_path':datasets.get('eval',datasets['sft']),'max_samples':64 if a.mode=='smoke' else None,'robot_type':'libero','model_type':'pi05'}])
  value['actor'].update(micro_batch_size=4 if a.mode=='smoke' else 32,global_batch_size=4 if a.mode=='smoke' else 32)
@@ -41,12 +42,13 @@ def main():
  for k in ['siglip_path','gemma3_path','tokenizer_path']:adv['advantage']['model'][k]=value['actor']['model'][k]
  adv['data']['train_data_paths']=[dict(x,robot_type='libero') for x in paths];write('advantages',adv)
  cfg=read('cfg_rl_openpi');cfg['runner'].update(max_epochs=-1,max_steps=2 if a.mode=='smoke' else a.cfg_steps,save_interval=2 if a.mode=='smoke' else 3000)
+ cfg['runner'].update(deadline_unix=a.deadline_unix,write_training_status=True)
  cfg['runner']['logger'].update(log_path=str(out),experiment_name='cfg',logger_backends=['tensorboard'])
  cfg['data'].update(num_workers=2,advantage_tag=advtag,train_data_paths=paths)
- cfg['actor'].update(micro_batch_size=4,global_batch_size=4)
+ cfg['actor'].update(micro_batch_size=4,global_batch_size=4 if a.mode=='smoke' else 16)
  cfg['actor']['model'].update(model_path=str(storage/'models/pi05-fewshot-libero/global_step_20000'),num_action_chunks=5,num_steps=10)
- cfg['actor']['optim'].update(total_training_steps=cfg['runner']['max_steps'],lr_warmup_steps=0 if a.mode=='smoke' else 1000)
+ cfg['actor']['optim'].update(total_training_steps=cfg['runner']['max_steps'],lr_warmup_steps=0 if a.mode=='smoke' else 1500)
  write('cfg',cfg)
- (out/'provenance/recipe.json').write_text(json.dumps({'mode':a.mode,'value_steps':value['runner']['max_steps'],'cfg_steps':cfg['runner']['max_steps'],'policy_batch':4,'value_batch':value['actor']['global_batch_size'],'dataset_note':'SFT contains 3 demonstrations per task for 10 tasks; rollout/eval are Task0 only. Raw metadata is not modified.'},indent=2))
+ (out/'provenance/recipe.json').write_text(json.dumps({'mode':a.mode,'value_steps':value['runner']['max_steps'],'cfg_steps':cfg['runner']['max_steps'],'policy_batch':cfg['actor']['global_batch_size'],'policy_micro_batch':4,'policy_warmup_steps':cfg['actor']['optim']['lr_warmup_steps'],'deadline_unix':a.deadline_unix,'value_batch':value['actor']['global_batch_size'],'dataset_note':'SFT contains 3 demonstrations per task for 10 tasks; rollout/eval are Task0 only. Raw metadata is not modified.'},indent=2))
  print(out)
 if __name__=='__main__':main()

@@ -17,8 +17,8 @@
 
 配置意图见 `configs/experiments/recap-task0.yaml`。`recap_prepare.py` 生成实际配置；正式目录为 `outputs/runs/libero/recap/pi05-20k-task0-20261110`。
 
-- 价值模型：8000 步，micro/global batch=32，学习率 5e-5，warmup 500；每1000步验证全部64回合，最终价值模型用于标注。
-- CFG：10000 步，micro/global batch=4，学习率1e-5，warmup1000，cosine；不使用 LoRA、不仅训练 action expert。
+- 价值模型：8000 步，micro/global batch=32，学习率 5e-5，warmup 500；每1000步验证全部64回合，实际完成并保存的价值模型用于标注。
+- CFG：目标10000步，micro batch=4、global batch=16（原生累积4次），学习率1e-5，warmup1500，cosine；不使用 LoRA、不仅训练 action expert。
 - 回报：gamma=1，失败终止惩罚-300。优势：N=10，top30%；SFT 标签按原实现强制为正。
 - 按上游混合采样实现使用两组 weight=1；其 balance_dataset_weights 会按帧数调整采样概率，不意味着两组各占50%。
 - 每3000步及最终保存原生完整检查点。此预算约产生3份价值、4份策略检查点，预留磁盘；不自动删除正式检查点。
@@ -40,3 +40,13 @@ python research/rl/scripts/recap_pipeline.py --root /root/autodl-tmp/EvoWorld --
 `pipeline-status.json` 表示当前阶段，`logs/` 保存原生输出，`provenance/` 记录提交、命令与退出码，`resources.jsonl` 记录显存与磁盘采样。任何失败都停止后续阶段，不输出成功率报告。恢复时禁止改变训练预算；部分失败的评测目录归档后重跑，不覆盖已完成评测。
 
 测试产物位于 `outputs/scratch/recap-20261110`。验收后删除测试检查点，保留配置、日志、参数更新记录、视频与验收结果。正式实验完成状态以 metrics/summary.json 和 pipeline-status.json 为准，创建目录或启动进程不表示完成。
+
+## 15小时预算（2026-11-10用户批准）
+
+预算从完整资源校验通过后开始，含回报计算、价值训练及验证、优势标注、100步吞吐校准、策略训练、检查点保存和两次Task0评测；下载不计入。`provenance/time-budget.json` 固定绝对截止时间，恢复不会重置预算。
+
+策略正式训练前，用完整混合数据、global16/micro4运行100步校准，从20步后取平均步耗时，再增加15%余量。校准不保存权重，也不作为正式训练起点。正式训练仍从原20k权重开始。另预留30分钟供最终保存/评测、10分钟供初始化与周期保存。若估计无法完成10000步，将步数下调为100的整数倍，warmup按实际步数15%计算、上限1500；决定写入 `provenance/policy-budget.json`，原配置保留为 `config/cfg-requested.yaml`。正式开始后不再改变学习率调度。
+
+RLinf fork 的可选 `runner.deadline_unix` 在更新边界触发最终保存，`runner.write_training_status` 输出实际步数和耗时。训练截止设为总截止前30分钟。每次保存完成后原子写入 `checkpoint_complete.json` 标记；pipeline和恢复入口只接受有完成标记、大小匹配的模型+DCP检查点，结果明确标记 `budget_limited`，不会把提前结束写成10000步。极端GPU或文件系统阻塞可能延误安全保存；截止保护不是实时系统保证。
+
+可用命令：`python research/rl/scripts/recap_pipeline.py --root /root/autodl-tmp/EvoWorld --budget-hours 15 --resume`。仍保留已有初始策略50回合复测，以匹配CFG推理封装。
