@@ -1,0 +1,3 @@
+[submodule "third_party/RLinf"]
+	path = third_party/RLinf
+	url = https://github.com/Galahad1123/RLinf.git

@@ -44,3 +44,9 @@ GPT 建模固定在 5090-1；P6000 只消费生成并验证的场景包。P6000 
 `doctor` 检查路径及模块可发现性，不启动 GPU 推理。专家环境需要额外验证 PointNet++ CUDA、M2T2 输出、cuRobo 规划和真实示范采集；不能只凭 `import` 成功验收。
 
 更新 CUDA、Torch 或 Isaac 时保留原环境，并重新执行相关兼容性检查。NVIDIA 软件与资产遵循各自许可；统一入口不代替用户接受许可。
+
+## RLinf 算法研究架构
+
+RLinf 已改为 fork + Git submodule 管理，源码位于 `third_party/RLinf`，不再应用 RLinf 补丁。算法研究独立组织在 `research/rl/`；环境、权重和数据继续通过机器配置引用。详见 [研究模块说明](../research/rl/README.md)。
+
+RLinf 安装兼容入口 / installer: `bash third_party/RLinf/requirements/install-evoworld.sh --help`。原始 `install.sh` 保留上游内容；旧 `rlinf-installer.patch` 已移除，请勿继续引用。已有可用环境无需重新安装。

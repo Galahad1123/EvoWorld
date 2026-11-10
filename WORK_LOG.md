@@ -66,3 +66,9 @@ P6000于北京时间22:40启动原生DSRL，截止2026-11-10约08:40。保持sid
 评测约24.4分钟，退出码0，20条视频和逐步动作/物理判定保存齐全，GPU释放。全部20条视频在本地通过448×224尺寸、帧数与控制步数一致及完整解码检查，记录见video-verification.json。DSRL成功率95% Wilson区间约25.8%–65.8%；20种子结果尚不足以证明稳定泛化收益。两策略采用各自原生推理方式：DSRL为确定性噪声Actor，SFT为固定种子随机初始噪声；该比较不是隔离学习效果与噪声选择效果的消融实验。
 
 P6000：`experiments/side70-milk-bin-20261109/evaluation-dsrl290-chunk10-h1000/`，含`report.json`、`comparison.json`、`model-load-evidence.json`、20条`episode-*.mp4`及逐步轨迹。控制日志位于相邻`evaluation-dsrl290-chunk10-h1000-control/`。报告、全部视频、脚本和日志同时同步到本地主机`/home/hello/lizk/vlas/EvoWorld/maintenance/dsrl-final-eval-20261110/`。实验脚本及产物通过SSH同步。
+
+## RL 研究架构迁移（2026-11-10）
+
+用户批准 fork + submodule。RLinf 上游基点 1bf78980d9339cbc67497eddceb9a1e3a74e2acc；P6000 实际源码仅有 stack_cube.py 修改及 install-evoworld.sh 新文件，已保全到 fork evoworld/compat 分支。EvoWorld 通过 third_party/RLinf gitlink 和清单锁定提交，不再应用旧 RLinf patch。其他组件暂保留原版本清单与补丁管理。
+
+research/rl 独立管理配置、独立评测入口、协议、报告及忽略的 outputs。LIBERO 基线维持 275/500（55%），此次仅迁移记录，不重新训练或评测。机器路径通过 configs/local.yaml 指定，共享权重和环境不复制。P6000 原部署源码保留，迁移前已备份；原始实验 provenance 不修改为新版本。

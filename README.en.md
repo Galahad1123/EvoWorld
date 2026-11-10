@@ -24,3 +24,7 @@ The portable entrypoints are implemented and checked without starting training o
 The side70 wrist profile is a diagnostic candidate, not the observation contract used to train existing checkpoints. It is disabled by default until trajectory-level camera acceptance and regenerated training observations are ready.
 
 Upstream versions and patches: `manifests/upstreams.json`. Third-party repositories retain their original licenses; no blanket license grant is made for their contents. Private resources and machine profiles are excluded from the repository.
+
+## RL research source management
+
+RLinf is now pinned as a Git submodule at `third_party/RLinf`, using the Galahad1123/RLinf fork. Do not reapply the former RLinf patches. Initialize with `git submodule update --init --recursive`. Research configurations, standalone evaluation, and reports live under `research/rl/`; see its Chinese README (primary documentation). Environments, weights and datasets remain external.

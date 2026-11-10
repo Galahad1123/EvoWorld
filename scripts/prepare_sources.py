@@ -14,6 +14,14 @@ def main():
  if not a.execute:return
  dest.mkdir(parents=True,exist_ok=True)
  for name,item in manifest.items():
+  if item.get('submodule'):
+   d=ROOT/item['submodule']
+   if not (d/'.git').exists():
+    run(['git','-C',str(ROOT),'submodule','update','--init','--',item['submodule']])
+   head=subprocess.check_output(['git','-C',str(d),'rev-parse','HEAD'],text=True).strip()
+   if head!=item['commit']:raise RuntimeError(f'{name}: submodule differs from manifest; refusing to reset')
+   print(f'{name}: use submodule {d}; no external clone or patches')
+   continue
   d=dest/name
   if not d.exists():run(['git','clone',item['url'],str(d)]);run(['git','-C',str(d),'checkout','--detach',item['commit']])
   head=subprocess.check_output(['git','-C',str(d),'rev-parse','HEAD'],text=True).strip()

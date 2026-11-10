@@ -47,3 +47,7 @@ GPT 模型及推理档位位于 `configs/gpt.yaml`。机器配置负责代理和
 历史 adapter 文档保留原始实验记录；固定主机的自动启动脚本归档为文本，位于 `docs/legacy-launchers`。当前部署优先使用统一入口。代码更新不覆盖外部环境和实验结果。
 
 本轮参数与运行入口见[侧移7厘米完整实验](docs/SIDE70_PIPELINE.md)。
+
+## RLinf 算法研究架构
+
+RLinf 已改为 fork + Git submodule 管理，源码位于 `third_party/RLinf`，不再应用 RLinf 补丁。算法研究独立组织在 `research/rl/`；环境、权重和数据继续通过机器配置引用。详见 [研究模块说明](research/rl/README.md)。

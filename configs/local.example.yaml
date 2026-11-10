@@ -8,7 +8,7 @@ environments:
   sim: ../envs/isaacsim6/bin/python
   convert: ../envs/rlinf-py312/bin/python
 upstreams:
-  RLinf: ../upstream/RLinf
+  RLinf: ../third_party/RLinf
   sage: ../upstream/sage
   g1-realtosim: ../upstream/g1-realtosim
   IsaacLab-RLinf: ../upstream/IsaacLab-RLinf
@@ -26,3 +26,7 @@ observation_contract: milk-bin-side70-v1
 resource_checks: {}
 # Each training dataset/checkpoint must declare its observation_contract under
 # resource_checks; add sha256 mappings for model/resource integrity verification.
+
+# 独立 RL 研究；路径相对本配置文件。无需复制现有环境及权重。
+research:
+  output_root: ../research/rl/outputs

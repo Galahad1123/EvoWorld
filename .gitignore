@@ -20,3 +20,5 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 adapters/sage_robot/src/
+
+research/rl/outputs/
