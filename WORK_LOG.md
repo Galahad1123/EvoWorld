@@ -72,3 +72,7 @@ P6000：`experiments/side70-milk-bin-20261109/evaluation-dsrl290-chunk10-h1000/`
 用户批准 fork + submodule。RLinf 上游基点 1bf78980d9339cbc67497eddceb9a1e3a74e2acc；P6000 实际源码仅有 stack_cube.py 修改及 install-evoworld.sh 新文件，已保全到 fork evoworld/compat 分支。EvoWorld 通过 third_party/RLinf gitlink 和清单锁定提交，不再应用旧 RLinf patch。其他组件暂保留原版本清单与补丁管理。
 
 research/rl 独立管理配置、独立评测入口、协议、报告及忽略的 outputs。LIBERO 基线维持 275/500（55%），此次仅迁移记录，不重新训练或评测。机器路径通过 configs/local.yaml 指定，共享权重和环境不复制。P6000 原部署源码保留，迁移前已备份；原始实验 provenance 不修改为新版本。
+
+## P6000 外层工作区整理（2026-11-10）
+
+正式 Git 仓库移动到 /root/autodl-tmp/EvoWorld。共享资源进入 storage，旧代码/配置和历史实验归入 storage/archive；专家源码保留为 storage/upstream/sage-expert。旧绝对路径通过单独的 compat 命名空间保持有效，不复制环境或权重。78 个 LIBERO 结果文件哈希保持一致。31 项轻量测试、5 项评测契约和新路径 dry-run 通过；本轮未启动训练或仿真。

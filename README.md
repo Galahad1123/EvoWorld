@@ -6,6 +6,8 @@ EvoWorld 将 GPT 照片建模、SAGE 专家示范生成、Isaac 仿真和 RLinf 
 
 ## 先阅读这些文档
 
+- [工作区布局与 P6000 正式入口](docs/WORKSPACE.md)
+
 - [环境安装与源码准备](docs/ENVIRONMENTS.md)
 - [额外资源、下载地址与生成方式](docs/RESOURCES.md)
 - [迁移验收结果与适用边界](docs/ACCEPTANCE.md)
