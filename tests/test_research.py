@@ -25,3 +25,22 @@ class ResearchTests(unittest.TestCase):
   self.assertNotIn('patch',m);self.assertNotIn('installer_patch',m)
   row=subprocess.check_output(['git','-C',str(ROOT),'ls-files','--stage',m['submodule']],text=True).split()
   self.assertEqual(row[0],'160000');self.assertEqual(row[1],m['commit'])
+
+class LaunchTests(unittest.TestCase):
+ def config(self,d):
+  return {'storage_root':d,'research':{'output_root':d},'upstreams':{'RLinf':d},
+          'resources':{'libero_checkpoint':d},'paths':{'cache':d},'environments':{'libero':'python'}}
+ def test_dry_run_creates_no_output(self):
+  from unittest.mock import patch
+  with tempfile.TemporaryDirectory() as d:
+   with patch.object(module,'load',return_value=self.config(d)),patch('sys.argv',['eval','--run-id','new','--stage','env','--dry-run']),patch('builtins.print'):
+    module.main()
+   self.assertEqual(list(Path(d).iterdir()),[])
+ def test_completed_run_rejected_before_writing_provenance(self):
+  from unittest.mock import patch
+  with tempfile.TemporaryDirectory() as d:
+   out=Path(d)/'runs/libero/pi05-sft/done';(out/'metrics').mkdir(parents=True)
+   (out/'metrics/summary.json').write_text('{}')
+   with patch.object(module,'load',return_value=self.config(d)),patch('sys.argv',['eval','--run-id','done','--stage','full']):
+    with self.assertRaises(RuntimeError):module.main()
+   self.assertFalse((out/'provenance').exists())
