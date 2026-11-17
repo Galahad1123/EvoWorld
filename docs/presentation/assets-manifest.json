@@ -1,0 +1,30 @@
+{
+  "media/main.jpg": {
+    "bytes": 127131,
+    "sha256": "1cb51d4cd2a6949eefb1eade3a17d1b96f6db9f5d64de70b42399ae2ce6d62fa"
+  },
+  "media/office_overview.png": {
+    "bytes": 687330,
+    "sha256": "fb542590af84713cab9e6b2ede2347d8494d986125038328006b0e4b1db2f54f"
+  },
+  "media/tabletop_preview.png": {
+    "bytes": 322159,
+    "sha256": "de8f098f37e1cc1aaa1fea327c4bbcd04f7c940e3434807617069ef6bed3606e"
+  },
+  "media/episode-000-final.png": {
+    "bytes": 62317,
+    "sha256": "630121f2b1fedc00bb3e1aa7ba80ca5234c838d98e37334d0bd1fb624fcead52"
+  },
+  "media/episode-000.mp4": {
+    "bytes": 208590,
+    "sha256": "1eb647c2552ea6e9ae2d2196f2ce2be2eb5f3f6ab8ee20aaf601e16170732538"
+  },
+  "docs/presentation/comparison.json": {
+    "bytes": 5219,
+    "sha256": "96bd5f4cb0f48c95de77538d9a85fc9055ccec42d67568ecd8eebf6fa3cceb7b"
+  },
+  "docs/presentation/report.json": {
+    "bytes": 13660,
+    "sha256": "cc45118661f7605f93e02b81def41ac48ec48a59944e43a6a0541d818c279a5f"
+  }
+}

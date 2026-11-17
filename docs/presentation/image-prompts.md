@@ -1,0 +1,6 @@
+# Image generation
+
+Mode: built-in image_gen. Output atlas: media/pipeline-icons.png. Icons are embedded by cell into media/pipeline.svg and media/logo.svg; text and arrows remain SVG elements.
+
+Use case: illustration-story. One coherent icon atlas for EvoWorld robotics pipeline. Exactly six separate icons in a strict 3-column 2-row equal-square grid with generous margins. Transparent background, no text or labels, no grid or panels, no glow. Polished restrained 3D editorial icons, ivory with sage teal sky-blue lavender and amber accents. Top left: two photo cards beside a small generated 3D milk carton mesh, representing GPT photo-to-scene modeling. Top center: miniature simulation tabletop with milk carton and storage bin. Top right: robot gripper lifting milk carton over bin, expert demonstrations. Bottom left: neat dataset stack with small conversion arrow, data bridge. Bottom center: neural policy core with circular learning arrow, SFT and reinforcement learning. Bottom right: elegant miniature globe with robot gripper and small scene cube, EvoWorld project emblem. Consistent soft studio light and crisp silhouette, every icon entirely inside its square, no lettering, no fake charts, no real photos.
+

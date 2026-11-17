@@ -1,0 +1,277 @@
+{
+  "complete": true,
+  "protocol": "side70 / seeds20000-20019 / chunk10 / horizon1000 / denoise10",
+  "sft_successes": 4,
+  "dsrl_successes": 9,
+  "total": 20,
+  "sft_rate": 0.2,
+  "dsrl_rate": 0.45,
+  "absolute_change_percentage_points": 25.0,
+  "dsrl_wilson95": [
+    0.2581978582556243,
+    0.6579146575496577
+  ],
+  "new_successes": [
+    20000,
+    20001,
+    20002,
+    20003,
+    20004,
+    20007
+  ],
+  "lost_successes": [
+    20010
+  ],
+  "both_successes": [
+    20013,
+    20015,
+    20017
+  ],
+  "both_failures": [
+    20005,
+    20006,
+    20008,
+    20009,
+    20011,
+    20012,
+    20014,
+    20016,
+    20018,
+    20019
+  ],
+  "dsrl_success_steps_mean": 764,
+  "dsrl_wall_seconds": 1464.8143103383482,
+  "checkpoint_sha256": "a1a8d57124c2f8fd6c8e887765df01ddce4703496f3ce5883d82a1a457344591",
+  "video_count": 20,
+  "videos_probed": true,
+  "paired": [
+    {
+      "seed": 20000,
+      "sft_success": false,
+      "dsrl_success": true,
+      "sft_steps": 1000,
+      "dsrl_steps": 647
+    },
+    {
+      "seed": 20001,
+      "sft_success": false,
+      "dsrl_success": true,
+      "sft_steps": 1000,
+      "dsrl_steps": 692
+    },
+    {
+      "seed": 20002,
+      "sft_success": false,
+      "dsrl_success": true,
+      "sft_steps": 1000,
+      "dsrl_steps": 826
+    },
+    {
+      "seed": 20003,
+      "sft_success": false,
+      "dsrl_success": true,
+      "sft_steps": 1000,
+      "dsrl_steps": 967
+    },
+    {
+      "seed": 20004,
+      "sft_success": false,
+      "dsrl_success": true,
+      "sft_steps": 1000,
+      "dsrl_steps": 731
+    },
+    {
+      "seed": 20005,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20006,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20007,
+      "sft_success": false,
+      "dsrl_success": true,
+      "sft_steps": 1000,
+      "dsrl_steps": 933
+    },
+    {
+      "seed": 20008,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20009,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20010,
+      "sft_success": true,
+      "dsrl_success": false,
+      "sft_steps": 565,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20011,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20012,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20013,
+      "sft_success": true,
+      "dsrl_success": true,
+      "sft_steps": 397,
+      "dsrl_steps": 813
+    },
+    {
+      "seed": 20014,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20015,
+      "sft_success": true,
+      "dsrl_success": true,
+      "sft_steps": 422,
+      "dsrl_steps": 732
+    },
+    {
+      "seed": 20016,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20017,
+      "sft_success": true,
+      "dsrl_success": true,
+      "sft_steps": 383,
+      "dsrl_steps": 535
+    },
+    {
+      "seed": 20018,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    },
+    {
+      "seed": 20019,
+      "sft_success": false,
+      "dsrl_success": false,
+      "sft_steps": 1000,
+      "dsrl_steps": 1000
+    }
+  ],
+  "video_checks": [
+    {
+      "episode": 0,
+      "bytes": 208590
+    },
+    {
+      "episode": 1,
+      "bytes": 210378
+    },
+    {
+      "episode": 2,
+      "bytes": 230309
+    },
+    {
+      "episode": 3,
+      "bytes": 260167
+    },
+    {
+      "episode": 4,
+      "bytes": 222069
+    },
+    {
+      "episode": 5,
+      "bytes": 236536
+    },
+    {
+      "episode": 6,
+      "bytes": 241114
+    },
+    {
+      "episode": 7,
+      "bytes": 256749
+    },
+    {
+      "episode": 8,
+      "bytes": 292434
+    },
+    {
+      "episode": 9,
+      "bytes": 246057
+    },
+    {
+      "episode": 10,
+      "bytes": 266130
+    },
+    {
+      "episode": 11,
+      "bytes": 266026
+    },
+    {
+      "episode": 12,
+      "bytes": 249824
+    },
+    {
+      "episode": 13,
+      "bytes": 241866
+    },
+    {
+      "episode": 14,
+      "bytes": 255414
+    },
+    {
+      "episode": 15,
+      "bytes": 226740
+    },
+    {
+      "episode": 16,
+      "bytes": 246853
+    },
+    {
+      "episode": 17,
+      "bytes": 178576
+    },
+    {
+      "episode": 18,
+      "bytes": 242375
+    },
+    {
+      "episode": 19,
+      "bytes": 251842
+    }
+  ],
+  "limitations": [
+    "20 held-out seeds in the same simulated task; not a real-robot or broad-generalization result.",
+    "DSRL uses native deterministic noise-actor eval; SFT uses its native seeded decoder-noise inference. This is a deployed-policy comparison, not an ablation isolating learned means from noise-mode effects."
+  ],
+  "video_verification": "video-verification.json",
+  "video_probe_host": "local"
+}

@@ -1,30 +1,88 @@
-[中文（优先维护）](README.md)
+<div align="center">
+  <img src="media/logo.svg" width="170" alt="EvoWorld logo">
+  <h1>EvoWorld</h1>
+  <p><strong>From photo-based scenes to simulation policy learning</strong></p>
+  <p><a href="README.md">中文</a> · English</p>
+  <p><a href="#pipeline">Pipeline</a> · <a href="#scenes-and-task">Scenes and task</a> · <a href="#task-evaluation">Evaluation</a> · <a href="#documentation">Documentation</a></p>
+</div>
 
-# EvoWorld
+EvoWorld connects **GPT-assisted modeling, SAGE expert demonstrations and RLinf policy learning**: construct simulation scenes from photos and task descriptions, collect demonstrations, convert datasets, and conduct SFT, reinforcement learning and independent evaluation.
 
-Research integration of GPT-assisted real-to-sim scene/asset generation, SAGE expert demonstrations, Isaac simulation, and RLinf SFT/RL.
+This personal integration project focuses on scene adapters, demonstration-to-dataset conversion, observation/action conventions and cross-component configuration and dispatch.
 
-## Portable setup
+## Pipeline
 
-1. Read [resource sources and downloads](docs/RESOURCES.md). Install the pinned component environments separately; do not install all their dependencies into this lightweight launcher environment.
-2. Install this launcher with `pip install -e .` (Python >=3.10).
-3. Copy `configs/local.example.yaml` to `configs/local.yaml`. Set interpreter paths, upstream checkout paths and resource mappings. Relative paths resolve against the YAML file's directory, not the shell working directory.
-4. Put `OPENAI_API_KEY=...` in `~/.config/evoworld/credentials.env` (mode 600), or supply it in the GPT process environment. Existing project `.env` may be referenced by `credentials_file`. Never commit credentials.
-5. Run `python -m evoworld doctor`. The report checks configured paths; missing entries and component execution readiness require the deployment audit described below.
-6. Inspect a command before execution, e.g. `python -m evoworld sft --dry-run`. `--config /path/to/machine.yaml` selects another machine profile. Arguments after `--` are forwarded to the underlying tool.
+[![EvoWorld pipeline](media/pipeline.svg)](media/pipeline.svg)
 
-Public experiment parameters live in task configs; machine config only locates dependencies and resources. GPT model and reasoning settings live in `configs/gpt.yaml`. Network configuration has separate GPT proxy and download mirror fields. Credentials are loaded only by `generate`.
+| Stage | Foundation | Integration |
+| --- | --- | --- |
+| Photo modeling | GPT-assisted scene and asset generation | Inputs, generated programs and build-feedback iterations |
+| Simulation | USD / Isaac | Scene assets, cameras and task configuration |
+| Demonstrations | SAGE, M2T2, cuRobo | Connect grasping and planning to the target scene |
+| Dataset bridge | HDF5 / LeRobot | Timing, action conversion, validity and training-set normalization |
+| Policy learning | RLinf, π₀.₅, DSRL | SFT/RL dispatch and independent online evaluation |
 
-Commands: `generate`, `collect`, `convert`, `sft`, `rl`, `eval`. These dispatch the existing implementations, not replacements for their algorithms. Each real invocation creates a separate run record; dry-run starts no training, simulation, download or API call. The realtosim generate command requires its original run directory, round name and prompt arguments. Input photos remain external.
+The launcher connects existing implementations rather than replacing their algorithms. Both current SFT and RL entry points use RLinf. See the [source-grounded layout notes](docs/presentation/pipeline-layout.md).
 
-## Migration status
+## Scenes and task
 
-The portable entrypoints are implemented and checked without starting training or policy evaluation. Historical adapter scripts and README files retain experimental context; fixed-host shell automation is archived as text under `docs/legacy-launchers`. Use the new launcher for current deployment. Environments, private assets and task checkpoints are external prerequisites: cloning this repository alone does not provide them. See [environment preparation](docs/ENVIRONMENTS.md) and [migration acceptance](docs/ACCEPTANCE.md). Existing experimental outputs are preserved externally.
+### Photo-based scene construction
 
-The side70 wrist profile is a diagnostic candidate, not the observation contract used to train existing checkpoints. It is disabled by default until trajectory-level camera acceptance and regenerated training observations are ready.
+<table>
+<tr><th>Input photograph</th><th>Generated scene preview</th></tr>
+<tr><td><img src="media/main.jpg" alt="Input photograph" width="440"></td><td><img src="media/office_overview.png" alt="Historical generated scene preview" width="440"></td></tr>
+</table>
 
-Upstream versions and patches: `manifests/upstreams.json`. Third-party repositories retain their original licenses; no blanket license grant is made for their contents. Private resources and machine profiles are excluded from the repository.
+These historical modeling assets illustrate scene construction; they are not frame-paired side70 policy-evaluation results. Preview cameras and evaluation observation versions are recorded separately.
 
-## RL research source management
+### Franka: place oat milk into a storage bin
 
-RLinf is now pinned as a Git submodule at `third_party/RLinf`, using the Galahad1123/RLinf fork. Do not reapply the former RLinf patches. Initialize with `git submodule update --init --recursive`. Research configurations, standalone evaluation, and reports live under `research/rl/`; see its Chinese README (primary documentation). Environments, weights and datasets remain external.
+<table>
+<tr><th>Historical modeled scene: tabletop view</th><th>Final frame of a successful DSRL episode</th></tr>
+<tr><td><img src="media/tabletop_preview.png" alt="Simulation tabletop" width="440"></td><td><a href="media/episode-000.mp4"><img src="media/episode-000-final.png" alt="Successful seed 20000 final frame" width="440"></a></td></tr>
+</table>
+
+[Watch the successful seed-20000 episode →](media/episode-000.mp4). This is a selected successful example, not the aggregate result. See [asset provenance](docs/presentation/evidence.md) and the evaluation below.
+
+## Task evaluation
+
+`milk-bin-side70-v1`, one simulated task, 20 fixed evaluation seeds (20000–20019). Predict 20 actions and execute 10 before replanning, with a 1000-control-step limit, 10 denoising steps and the same physical success thresholds.
+
+| Policy | Successful episodes | Sample success rate |
+| --- | --- | --- |
+| π₀.₅ SFT, 20,000 updates | 4 / 20 | 20% |
+| SFT followed by DSRL, final iteration 290 | 9 / 20 | 45% |
+
+An increase of **25 percentage points** in this sample. These are archived results completed on November 10, 2026; no evaluation was rerun for this presentation. Success requires containment, support, release and stability.
+
+This small same-task simulation comparison does not establish real-robot performance or broad generalization. DSRL uses a deterministic noise actor while SFT uses native seeded decoder noise, so it does not isolate training effects from noise-selection effects. DSRL also takes more steps on the three seeds where both policies succeed. See the [original comparison](docs/presentation/comparison.json), [per-episode DSRL report](docs/presentation/report.json) and [full experiment notes](docs/SIDE70_PIPELINE.md).
+
+## Entry points
+
+| Command | Purpose |
+| --- | --- |
+| `generate` | GPT-assisted scene/asset generation |
+| `collect` | Expert demonstration collection |
+| `convert` | Training-dataset conversion |
+| `sft` | RLinf supervised fine-tuning |
+| `rl` | RLinf reinforcement learning |
+| `eval` | Independent policy evaluation |
+
+Dispatch with `python -m evoworld <command>`; consult the usage guide for arguments and external resources. `doctor` checks prerequisites and `--dry-run` previews commands; neither establishes simulation or training acceptance.
+
+## Documentation
+
+| Topic | Guides |
+| --- | --- |
+| Setup and usage | [Complete usage guide](docs/usage-guide.en.md) · [Machine template](configs/local.example.yaml) |
+| Environments and resources | [Environment preparation](docs/ENVIRONMENTS.en.md) · [Resources](docs/RESOURCES.en.md) · [Workspace layout](docs/WORKSPACE.md) |
+| Scene and expert collection | [Expert environment](docs/P6000_EXPERT.md) · [Task adapters](adapters/milk_bin) |
+| Data, training and evaluation | [Complete side70 pipeline](docs/SIDE70_PIPELINE.md) · [RL research module](research/rl/README.md) |
+| Migration and compatibility | [Acceptance](docs/ACCEPTANCE.en.md) · [Upstream versions](manifests/upstreams.json) |
+| Presentation evidence | [Pipeline notes](docs/presentation/pipeline-layout.md) · [Assets and results](docs/presentation/evidence.md) |
+
+Both previous READMEs are preserved as usage guides. The old English side70 candidate statement is marked as historical; the current formal observation contract is `milk-bin-side70-v1`. Complete datasets, weights, environments and machine profiles remain external resources.
+
+## Acknowledgements
+
+Thanks to SAGE, RLinf, OpenPI / π₀.₅, M2T2, cuRobo and Isaac. Exact sources, versions and patches are recorded in [manifests/upstreams.json](manifests/upstreams.json), with licenses under [third_party_licenses](third_party_licenses). RLinf is managed as a [fork](https://github.com/Galahad1123/RLinf) submodule. No blanket license is granted for third-party contents.
